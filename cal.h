@@ -1,6 +1,7 @@
 #include "Info.h"
 #include <eigen/Eigen/Dense>
 #include <cmath>
+#include <string>
 
 using namespace Eigen;
 
@@ -58,13 +59,24 @@ Vector4d AB_method(Vector4d u0, const double dt, double mu, int _acc, int N, con
     k++;
   }
   std::ofstream os;
-  os.open("AB_")
+  std::string ss = "AB_" + std::to_string(_acc) + "_" + std::to_string(N) + ".m";
+  const char *s = ss.c_str();
+  os.open(s);
+  os << "a=[\n";
+  for (int i = 0; i < _acc ; i++)
+    os << u[i](0) << "," << u[i](1) << ";\n";
   const Info& AB_info = table.get_info(_acc);
   for (int i = 0; i < N - _acc + 1; i++){
     Vector4d v = AB_one_step(u,dt,mu,_acc,AB_info);
     for (int j = 0; j < _acc - 1 ; j++)
       u[j] = u[j+1];
     u[_acc-1] = v;
+    os << v(0) << "," << v(1) << ";\n";
   }
+  os << "];\n";
+  os << "x = a(:,1);";
+  os << "y = a(:,2);";
+  os << "plot(x,y)";
+  os.close();
   return u[_acc-1];
 }

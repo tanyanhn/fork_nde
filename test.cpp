@@ -28,19 +28,20 @@ int main( int argc, char* agrv[]){
   std::cout << "\b " << std::endl;*/
   Vector4d u0;
   double mu;
-  u0 = initial_load("Initial1",&mu);
-  double dt = 0.01;
-  /*Vector4d v1 = AB_one_step(u,dt,mu,1,AB);
-  std::cout << v1 << std::endl;
-  u[1] = v1;
-  Vector4d v2 = AB_one_step(u,dt,mu,2,AB);
-  std::cout << v2 << std::endl;
-  u[2] = v2;
-  Vector4d v3 = AB_one_step(u,dt,mu,3,AB);
-  u[3] = v3;
-  Vector4d v4 = AB_one_step(u,dt,mu,4,AB);
-  std::cout << v4 << std::endl;*/
-  Vector4d v = AB_method(u0,dt,mu,1,3,AB);
+  u0 = initial_load("Initial2",&mu);
+  double dt = 0.002;
+  /* Vector4d v = AB_one_step(u,dt,mu,1,AB);
+  std::cout << v << std::endl;
+  u[0] = v;
+  v = AB_one_step(u,dt,mu,1,AB);
+  std::cout << v << std::endl;
+  u[0] = v;
+  v = AB_one_step(u,dt,mu,1,AB);
+  std::cout << v << std::endl;
+  u[0] = v;
+  v = AB_one_step(u,dt,mu,1,AB);
+  std::cout << v << std::endl;*/
+  Vector4d v = AB_method(u0,dt,mu,1,12000,AB);
   std::cout << v << std::endl;
   return 0;
 }
