@@ -1,5 +1,5 @@
-all: test.o Info.o
-	g++ -o test test.o Info.o
+all: test.o Info.o cal.h
+	g++ -o test test.o Info.o cal.h
 Info.o: Info.h Info.cpp
 	g++ -c Info.cpp
 test.o: test.cpp

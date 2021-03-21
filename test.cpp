@@ -2,10 +2,13 @@
 #include "cal.h"
 
 int main( int argc, char* agrv[]){
-  /*Info_Table AB;
+  Info_Table AB;
   AB.load_data("Adams_Bashforth",1);
-  std::cout << AB.get_n_table() << " " << AB.get_type() << std::endl;
-  const Info& AB_info = AB.get_info(3);
+  /*std::cout << AB.get_n_table() << " " << AB.get_type() << std::endl;
+  const Info& AB_info1 = AB.get_info(1);
+  const Info& AB_info2 = AB.get_info(2);
+  const Info& AB_info3 = AB.get_info(3);
+  const Info& AB_info4 = AB.get_info(4);
   for (int i = 0; i < 3 ; i++)
     std::cout << AB_info.get_coe(i) << ",";
   std::cout << "\b " << std::endl;
@@ -23,9 +26,21 @@ int main( int argc, char* agrv[]){
   for (int i = 0; i < 4 ; i++)
     std::cout << BDF_info.get_coe(i) << ",";
   std::cout << "\b " << std::endl;*/
-  Vector4d u;
+  Vector4d u0;
   double mu;
-  u = initial_load("Initial1",&mu);
-  std::cout << mu << std::endl << u <<std::endl;
+  u0 = initial_load("Initial1",&mu);
+  double dt = 0.01;
+  /*Vector4d v1 = AB_one_step(u,dt,mu,1,AB);
+  std::cout << v1 << std::endl;
+  u[1] = v1;
+  Vector4d v2 = AB_one_step(u,dt,mu,2,AB);
+  std::cout << v2 << std::endl;
+  u[2] = v2;
+  Vector4d v3 = AB_one_step(u,dt,mu,3,AB);
+  u[3] = v3;
+  Vector4d v4 = AB_one_step(u,dt,mu,4,AB);
+  std::cout << v4 << std::endl;*/
+  Vector4d v = AB_method(u0,dt,mu,1,3,AB);
+  std::cout << v << std::endl;
   return 0;
 }
