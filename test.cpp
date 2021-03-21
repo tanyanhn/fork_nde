@@ -23,9 +23,9 @@ int main( int argc, char* agrv[]){
   for (int i = 0; i < 4 ; i++)
     std::cout << BDF_info.get_coe(i) << ",";
   std::cout << "\b " << std::endl;*/
-  Vector4d a;
-  a << 2.1,5,0,-1.4;
-  Vector4d b = f(a);
-  std::cout << b << std::endl;
+  Vector4d u;
+  double mu;
+  u = initial_load("Initial1",&mu);
+  std::cout << mu << std::endl << u <<std::endl;
   return 0;
 }
