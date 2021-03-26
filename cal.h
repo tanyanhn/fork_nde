@@ -16,8 +16,8 @@ Vector4d f(Vector4d u, double mu){
   double v0,v1,v2,v3;
   double tmp1 = u(0) + mu - 1;
   double tmp2 = u(0) + mu;
-  double den1 = pow(u(1) * u(1) + tmp1 * tmp1, 3/2);
-  double den2 = pow(u(1) * u(1) + tmp2 * tmp2, 3/2);
+  double den1 = pow(u(1) * u(1) + tmp1 * tmp1, 1.5);
+  double den2 = pow(u(1) * u(1) + tmp2 * tmp2, 1.5);
   v0 = u(2);
   v1 = u(3);
   v2 = 2 * u(3) + u(0) - mu * tmp1 / den1 - (1 - mu) * tmp2 / den2;

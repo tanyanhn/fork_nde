@@ -29,7 +29,7 @@ int main( int argc, char* agrv[]){
   Vector4d u0;
   double mu;
   u0 = initial_load("Initial2",&mu);
-  double dt = 0.002;
+  double dt = 0.01;
   /* Vector4d v = AB_one_step(u,dt,mu,1,AB);
   std::cout << v << std::endl;
   u[0] = v;
@@ -41,7 +41,9 @@ int main( int argc, char* agrv[]){
   u[0] = v;
   v = AB_one_step(u,dt,mu,1,AB);
   std::cout << v << std::endl;*/
-  Vector4d v = AB_method(u0,dt,mu,1,12000,AB);
-  std::cout << v << std::endl;
+  Vector4d v = AB_method(u0,dt,mu,4,1900,AB);
+  std::cout <<  v << std::endl;
+  
+  
   return 0;
 }
