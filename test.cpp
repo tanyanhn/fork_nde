@@ -11,10 +11,10 @@ int main( int argc, char* agrv[]){
   const Info& AB_info4 = AB.get_info(4);
   for (int i = 0; i < 3 ; i++)
     std::cout << AB_info.get_coe(i) << ",";
-  std::cout << "\b " << std::endl;
+  std::cout << "\b " << std::endl;*/
   Info_Table AM;
   AM.load_data("Adams_Moulton",2);
-  std::cout << AM.get_n_table() << " " << AM.get_type() << std::endl;
+  /*std::cout << AM.get_n_table() << " " << AM.get_type() << std::endl;
   const Info& AM_info = AM.get_info(7);
   for (int i = 0; i < 5 ; i++)
     std::cout << AM_info.get_coe(i) << ",";
@@ -28,8 +28,8 @@ int main( int argc, char* agrv[]){
   std::cout << "\b " << std::endl;*/
   Vector4d u0;
   double mu;
-  u0 = initial_load("Initial2",&mu);
-  double dt = 0.001;
+  u0 = initial_load("Initial1",&mu);
+  double dt = 0.0001;
   /*Vector4d v = AB_one_step(u0,dt,mu,1,AB);
   std::cout << v << std::endl;
   u[0] = v;
@@ -41,12 +41,12 @@ int main( int argc, char* agrv[]){
   u[0] = v;
   v = AB_one_step(u,dt,mu,1,AB);
   std::cout << v << std::endl;*/
-  Vector4d v = AB_method(u0,dt,mu,1,1,AB);
-  std::cout <<  v << std::endl;
-  Vector4d w = Newton(u0,mu,-dt,u0);
-  std::cout << w << std::endl;
-  Vector4d z = Newton(u0,mu,-0.5*dt,u0+0.5*dt*f(u0,mu));
-  std::cout << z << std::endl;
+  Vector4d v = AB_method(u0,dt,mu,4,180000,AB);
+  std::cout << v << std::endl;
+  //Vector4d w = AM_method(u0,dt,mu,3,90000,AM);
+  //std::cout << w << std::endl;
+  //Vector4d z = Newton(u0,mu,-0.5*dt,u0+0.5*dt*f(u0,mu));
+  //std::cout << z << std::endl;
   
   return 0;
 }

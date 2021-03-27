@@ -5,17 +5,22 @@
 
 using namespace Eigen;
 
-Vector4d f(Vector4d u, double mu);
-Vector4d F(Vector4d u, double mu, double k, Vector4d b);
-Matrix4d DF(Vector4d u, double mu, double k);
-Vector4d Newton(Vector4d u0, double mu, double k, Vector4d b);
+Vector4d f(Vector4d u, const double mu);
+Vector4d F(Vector4d u, const double mu, const double k, Vector4d b);
+Matrix4d DF(Vector4d u, const double mu, const double k);
+Vector4d Newton(Vector4d u0, const double mu, const double k, Vector4d b);
+
 Vector4d initial_load(const char _file[],double* _mu);
+
 Vector4d AB_one_step(Vector4d* u, const double dt, double mu, int _acc, const Info& info);
 Vector4d AB_one_step(Vector4d* u, const double dt, double mu, int _acc, const Info_Table& table);
 Vector4d AB_method(Vector4d u0, const double dt, double mu, int _acc, int N, const Info_Table& table);
 
+Vector4d AM_one_step(Vector4d* u, const double dt, double mu, int _acc, const Info& info);
+Vector4d AM_one_step(Vector4d* u, const double dt, double mu, int _acc, const Info_Table& table);
+Vector4d AM_method(Vector4d u0, const double dt, double mu, int _acc, int N, const Info_Table& table);
 
-Vector4d f(Vector4d u, double mu){
+Vector4d f(Vector4d u, const double mu){
   double v0,v1,v2,v3;
   double tmp1 = u(0) + mu - 1;
   double tmp2 = u(0) + mu;
@@ -29,12 +34,12 @@ Vector4d f(Vector4d u, double mu){
   return v;
 }
 
-Vector4d F(Vector4d u, double mu, double k, Vector4d b){
+Vector4d F(Vector4d u, const double mu, const double k, Vector4d b){
   Vector4d v = u + k * f(u,mu) - b;
   return v;
 }
 
-Matrix4d DF(Vector4d u, double mu, double k){
+Matrix4d DF(Vector4d u, const double mu, const double k){
   Matrix4d D;
   double tmp1 = u(0) + mu - 1;
   double tmp2 = u(0) + mu;
@@ -52,7 +57,7 @@ Matrix4d DF(Vector4d u, double mu, double k){
   return D;
 }
 
-Vector4d Newton(Vector4d u0, double mu, double k, Vector4d b){
+Vector4d Newton(Vector4d u0, const double mu, const double k, Vector4d b){
   Vector4d v = u0;
   Matrix4d M = DF(v,mu,k);
   Vector4d r = -F(v,mu,k,b);
@@ -123,4 +128,50 @@ Vector4d AB_method(Vector4d u0, const double dt, double mu, int _acc, int N, con
   os << "plot(x,y)";
   os.close();
   return u[_acc-1];
+}
+
+Vector4d AM_one_step(Vector4d* u, const double dt, double mu, int _acc, const Info& info){
+  Vector4d b = u[_acc-2];
+  for ( int i = 2; i <= _acc; i++)
+    b += f(u[_acc-i],mu)*info.get_coe(i-1)*dt;
+  Vector4d v = Newton(u[_acc-2],mu,-dt*info.get_coe(0),b);
+  return v;
+}
+
+Vector4d AM_one_step(Vector4d* u, const double dt, double mu, int _acc, const Info_Table& table){
+  const Info& AM_info=table.get_info(_acc);
+  return AM_one_step(u,dt,mu,_acc,AM_info);
+}
+
+Vector4d AM_method(Vector4d u0, const double dt, double mu, int _acc, int N, const Info_Table& table){
+  Vector4d* u;
+  u = new Vector4d [_acc-1];
+  u[0] = u0;
+  int k = 1;
+  while (k < _acc - 1){
+    Vector4d v = AM_one_step(u,dt,mu,k+1,table);
+    u[k] = v;
+    k++;
+  }
+  std::ofstream os;
+  std::string ss = "AM_" + std::to_string(_acc) + "_" + std::to_string(N) + ".m";
+  const char *s = ss.c_str();
+  os.open(s);
+  os << "a=[\n";
+  for (int i = 0; i < _acc - 1 ; i++)
+    os << u[i](0) << "," << u[i](1) << ";\n";
+  const Info& AM_info = table.get_info(_acc);
+  for (int i = 0; i < N - _acc + 2; i++){
+    Vector4d v = AM_one_step(u,dt,mu,_acc,AM_info);
+    for (int j = 0; j < _acc - 2 ; j++)
+      u[j] = u[j+1];
+    u[_acc-2] = v;
+    os << v(0) << "," << v(1) << ";\n";
+  }
+  os << "];\n";
+  os << "x = a(:,1);";
+  os << "y = a(:,2);";
+  os << "plot(x,y)";
+  os.close();
+  return u[_acc-2];
 }
