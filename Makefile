@@ -6,5 +6,8 @@ test.o: test.cpp
 	g++ -c test.cpp -std=c++11
 clean:
 	rm *.o
+	rm test
+cleanm:
+	rm *.o
 	rm *.m
 	rm test

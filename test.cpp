@@ -29,8 +29,8 @@ int main( int argc, char* agrv[]){
   Vector4d u0;
   double mu;
   u0 = initial_load("Initial2",&mu);
-  double dt = 0.01;
-  /* Vector4d v = AB_one_step(u,dt,mu,1,AB);
+  double dt = 0.001;
+  /*Vector4d v = AB_one_step(u0,dt,mu,1,AB);
   std::cout << v << std::endl;
   u[0] = v;
   v = AB_one_step(u,dt,mu,1,AB);
@@ -41,9 +41,12 @@ int main( int argc, char* agrv[]){
   u[0] = v;
   v = AB_one_step(u,dt,mu,1,AB);
   std::cout << v << std::endl;*/
-  Vector4d v = AB_method(u0,dt,mu,4,1900,AB);
+  Vector4d v = AB_method(u0,dt,mu,1,1,AB);
   std::cout <<  v << std::endl;
-  
+  Vector4d w = Newton(u0,mu,-dt,u0);
+  std::cout << w << std::endl;
+  Vector4d z = Newton(u0,mu,-0.5*dt,u0+0.5*dt*f(u0,mu));
+  std::cout << z << std::endl;
   
   return 0;
 }

@@ -6,6 +6,9 @@
 using namespace Eigen;
 
 Vector4d f(Vector4d u, double mu);
+Vector4d F(Vector4d u, double mu, double k, Vector4d b);
+Matrix4d DF(Vector4d u, double mu, double k);
+Vector4d Newton(Vector4d u0, double mu, double k, Vector4d b);
 Vector4d initial_load(const char _file[],double* _mu);
 Vector4d AB_one_step(Vector4d* u, const double dt, double mu, int _acc, const Info& info);
 Vector4d AB_one_step(Vector4d* u, const double dt, double mu, int _acc, const Info_Table& table);
@@ -25,6 +28,47 @@ Vector4d f(Vector4d u, double mu){
   Vector4d v(v0,v1,v2,v3);
   return v;
 }
+
+Vector4d F(Vector4d u, double mu, double k, Vector4d b){
+  Vector4d v = u + k * f(u,mu) - b;
+  return v;
+}
+
+Matrix4d DF(Vector4d u, double mu, double k){
+  Matrix4d D;
+  double tmp1 = u(0) + mu - 1;
+  double tmp2 = u(0) + mu;
+  double den1 = pow(u(1) * u(1) + tmp1 * tmp1, 2.5);
+  double den2 = pow(u(1) * u(1) + tmp2 * tmp2, 2.5);
+  double result1 = 1 - mu * (u(1) * u(1) - 2 * tmp1 * tmp1) / den1 -
+    (1 - mu) * (u(1) * u(1) - 2 * tmp2 * tmp2) / den2;
+  double result2 = 3 * mu * u(1) * tmp1 / den1 + 3 * (1 - mu) * u(1) * tmp2 / den2;
+  double result3 = 1 - mu * (-2 * u(1) * u(1) + tmp1 * tmp1) / den1 -
+    (1 - mu) * (-2 * u(1) * u(1) + tmp2 * tmp2) /den2;
+  D << 1,0,k,0,
+    0,1,0,k,
+    k*result1,k*result2,1,2,
+    k*result2,k*result3,-2,1;
+  return D;
+}
+
+Vector4d Newton(Vector4d u0, double mu, double k, Vector4d b){
+  Vector4d v = u0;
+  Matrix4d M = DF(v,mu,k);
+  Vector4d r = -F(v,mu,k,b);
+  Vector4d dv;
+  dv = M.colPivHouseholderQr().solve(r);
+  v += dv;
+  r = -F(v,mu,k,b);
+  while( r.squaredNorm() > 10e-16){
+    M = DF(v,mu,k);
+    dv = M.colPivHouseholderQr().solve(r);
+    v += dv;
+    r = -F(v,mu,k,b);
+  }
+  return v;
+}
+
 
 Vector4d initial_load(const char _file[],double* _mu){
   std::fstream data(_file);
