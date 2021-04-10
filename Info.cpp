@@ -50,7 +50,7 @@ Info_Table::~Info_Table(){
   delete [] table;
 }
 
-void Info_Table::load_data(const char _file[], int _type){
+void Info_Table::load_data(const char _file[], const int _type){
   if (table != NULL){
     std::cerr << "Table is not empty!" << std::endl;
     return;
@@ -73,6 +73,11 @@ void Info_Table::load_data(const char _file[], int _type){
   }
   data.close();
 }
+
+void Info_Table::set_type(const int _type){
+  type = _type;
+}
+
 
 int Info_Table::get_n_table() const{
   return n_table;

@@ -29,9 +29,6 @@ class TimeIntegrator: public CalPolicy{
 };
 
 
-void fff(){
-  std::cout << "!!" << std::endl;
-}
 
 #else
 //do nothing

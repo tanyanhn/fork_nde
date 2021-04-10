@@ -27,7 +27,8 @@ class Info_Table{
  public:
   Info_Table();
   ~Info_Table();
-  void load_data(const char _file[], int _type);
+  void load_data(const char _file[],const int _type);
+  void set_type(const int _type);
   int get_n_table() const;
   int get_type() const;
   const Info& get_info(int _acc) const;

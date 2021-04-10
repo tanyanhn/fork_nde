@@ -13,30 +13,30 @@ Vector4d F(Vector4d u, const double mu, const double k, Vector4d b);
 Matrix4d DF(Vector4d u, const double mu, const double k);
 Vector4d Newton(Vector4d u0, const double mu, const double k, Vector4d b);
 
-Vector4d initial_load(const char _file[], double* _mu);
-Vector4d initial_load(const char _file[], double* _mu, double* _T);
+Vector4d initial_load(const char _file[], double& _mu);
+Vector4d initial_load(const char _file[], double& _mu, double& _T);
 
 Vector4d AB_one_step(Vector4d* u, const double dt, const double mu, int _acc, const Info& info);
 Vector4d AB_one_step(Vector4d* u, const double dt, const double mu, int _acc, const Info_Table& table);
 Vector4d AB_method(Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table);
-Vector4d AB_method(double* time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table);
+Vector4d AB_method(double& time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table);
 
 Vector4d AM_one_step(Vector4d* u, const double dt, const double mu, int _acc, const Info& info);
 Vector4d AM_one_step(Vector4d* u, const double dt, const double mu, int _acc, const Info_Table& table);
 Vector4d AM_method(Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table);
-Vector4d AM_method(double* time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table);
+Vector4d AM_method(double& time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table);
 
 Vector4d BDF_one_step(Vector4d* u, const double dt, const double mu, int _acc, const Info& info);
 Vector4d BDF_one_step(Vector4d* u, const double dt, const double mu, int _acc, const Info_Table& table);
 Vector4d BDF_method(Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table);
-Vector4d BDF_method(double* time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table);
+Vector4d BDF_method(double& time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table);
 
 Vector4d RK_one_step(Vector4d u, const double dt, const double mu);
 Vector4d RK_method(Vector4d u0, const double dt, const double mu, int N);
-Vector4d RK_method(double* time, Vector4d u0, const double dt, const double mu, int N);
+Vector4d RK_method(double& time, Vector4d u0, const double dt, const double mu, int N);
   
-double err_initial(double* time, Vector4d u0, const double dt, const double mu, int _acc, double T, const Info_Table& table, int type);
-double err_initial(double* time, Vector4d u0, const double dt, const double mu, double T, int type);
+double err_initial(double& time, Vector4d u0, const double dt, const double mu, int _acc, double T, const Info_Table& table, int type);
+double err_initial(double& time, Vector4d u0, const double dt, const double mu, double T, int type);
 
 Vector4d f(Vector4d u, const double mu){
   double v0,v1,v2,v3;
@@ -93,9 +93,9 @@ Vector4d Newton(Vector4d u0, const double mu, const double k, Vector4d b){
 }
 
 
-Vector4d initial_load(const char _file[],double* _mu){
+Vector4d initial_load(const char _file[],double& _mu){
   std::fstream data(_file);
-  data >>*_mu;
+  data >>_mu;
   Vector4d u;
   for (int i = 0 ; i < 4 ; i++)
     data >> u(i);
@@ -103,13 +103,13 @@ Vector4d initial_load(const char _file[],double* _mu){
   return u;
 }
 
-Vector4d initial_load(const char _file[], double* _mu, double* _T){
+Vector4d initial_load(const char _file[], double& _mu, double& _T){
   std::fstream data(_file);
-  data >>*_mu;
+  data >>_mu;
   Vector4d u;
   for (int i = 0 ; i < 4 ; i++)
     data >> u(i);
-  data >>*_T;
+  data >>_T;
   data.close();
   return u;
 }
@@ -160,11 +160,11 @@ Vector4d AB_method(Vector4d u0, const double dt, const double mu, int _acc, int 
   return u[_acc-1];
 }
 
-Vector4d AB_method(double* time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table){
+Vector4d AB_method(double& time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table){
   clock_t t1 = clock();
   Vector4d v = AB_method(u0,dt,mu,_acc,N,table);
   clock_t t2 = clock();
-  *time = (double)(t2 - t1) / CLOCKS_PER_SEC * 1000;
+  time = (double)(t2 - t1) / CLOCKS_PER_SEC * 1000;
   return v;
 }
 
@@ -214,11 +214,11 @@ Vector4d AM_method(Vector4d u0, const double dt, const double mu, int _acc, int 
   return u[_acc-2];
 }
 
-Vector4d AM_method(double* time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table){
+Vector4d AM_method(double& time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table){
   clock_t t1 = clock();
   Vector4d v = AM_method(u0,dt,mu,_acc,N,table);
   clock_t t2 = clock();
-  *time = (double)(t2 - t1) / CLOCKS_PER_SEC * 1000;
+  time = (double)(t2 - t1) / CLOCKS_PER_SEC * 1000;
   return v;
 }
 
@@ -270,11 +270,11 @@ Vector4d BDF_method(Vector4d u0, const double dt, const double mu, int _acc, int
   return u[_acc-1];
 }
 
-Vector4d BDF_method(double* time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table){
+Vector4d BDF_method(double& time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table){
   clock_t t1 = clock();
   Vector4d v = BDF_method(u0,dt,mu,_acc,N,table);
   clock_t t2 = clock();
-  *time = (double)(t2 - t1) / CLOCKS_PER_SEC * 1000;
+  time = (double)(t2 - t1) / CLOCKS_PER_SEC * 1000;
   return v;
 }
 
@@ -308,15 +308,15 @@ Vector4d RK_method(Vector4d u0, const double dt, const double mu, int N){
   return u;
 }
 
-Vector4d RK_method(double* time, Vector4d u0, const double dt, const double mu, int N){
+Vector4d RK_method(double& time, Vector4d u0, const double dt, const double mu, int N){
   clock_t t1 = clock();
   Vector4d v = RK_method(u0,dt,mu,N);
   clock_t t2 = clock();
-  *time = (double)(t2 - t1) / CLOCKS_PER_SEC * 1000;
+  time = (double)(t2 - t1) / CLOCKS_PER_SEC * 1000;
   return v;
 }
 
-double err_initial(double* time, Vector4d u0, const double dt, const double mu, int _acc, double T, const Info_Table& table, int type){
+double err_initial(double& time, Vector4d u0, const double dt, const double mu, int _acc, double T, const Info_Table& table, int type){
   int N = round(T/dt);
   Vector4d v;
   double err = -1;
@@ -339,7 +339,7 @@ double err_initial(double* time, Vector4d u0, const double dt, const double mu, 
   }
 }
 
-double err_initial(double* time, Vector4d u0, const double dt, const double mu, double T, int type){
+double err_initial(double& time, Vector4d u0, const double dt, const double mu, double T, int type){
   if ( type == 4){
     int N = round(T/dt);
     Vector4d v = RK_method(time,u0,dt,mu,N);
