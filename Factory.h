@@ -6,12 +6,11 @@
 template<class T>
 class TimeIntegratorFactory{
  public:
- static T& Instance();
- private:
  TimeIntegratorFactory();
- TimeIntegratorFactory(const TimeIntegratorFactory&);
  ~TimeIntegratorFactory();
- static TimeIntegratorFactory* pInstance_;
+ T* get_pointer();
+ private:
+ T* pInstance_;
 };
 
 

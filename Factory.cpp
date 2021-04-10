@@ -1,11 +1,18 @@
 #include "Factory.h"
 
 template<class T>
-T& TimeIntegratorFactory<T>::Instance(){
-  if (!pInstance_)
-    pInstance_ = new T;
+TimeIntegratorFactory<T>::TimeIntegratorFactory(){
+  pInstance_ = new T;
+}
+
+template<class T>
+TimeIntegratorFactory<T>::~TimeIntegratorFactory(){};
+
+template<class T>
+T* TimeIntegratorFactory<T>::get_pointer(){
   return pInstance_;
 }
+
 
 class Adams_Bashforth{
  public:
