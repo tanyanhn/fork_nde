@@ -35,7 +35,7 @@ Vector4d RK_one_step(Vector4d u, const double dt, const double mu);
 Vector4d RK_method(Vector4d u0, const double dt, const double mu, int N);
 Vector4d RK_method(double& time, Vector4d u0, const double dt, const double mu, int N);
   
-double err_initial(double& time, Vector4d u0, const double dt, const double mu, int _acc, double T, const Info_Table& table, int type);
+double err_initial(double& time, Vector4d u0, const double dt, const double mu, const int _acc, double T, const Info_Table& table, int type);
 double err_initial(double& time, Vector4d u0, const double dt, const double mu, double T, int type);
 
 Vector4d f(Vector4d u, const double mu){
@@ -316,7 +316,7 @@ Vector4d RK_method(double& time, Vector4d u0, const double dt, const double mu, 
   return v;
 }
 
-double err_initial(double& time, Vector4d u0, const double dt, const double mu, int _acc, double T, const Info_Table& table, int type){
+double err_initial(double& time, Vector4d u0, const double dt, const double mu, const int _acc, double T, const Info_Table& table, int type){
   int N = round(T/dt);
   Vector4d v;
   double err = -1;

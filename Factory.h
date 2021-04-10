@@ -24,8 +24,8 @@ class TimeIntegrator: public CalPolicy{
   ~TimeIntegrator();
   Info_Table* get_table();
   Vector4d one_step(Vector4d* u, const double dt, const double mu, int _acc);
-  Vector4d n_steps(double& time, Vector4d u0, const double dt, const double mu, int _acc, int N);
-  double err_initial(double& time, Vector4d u0, const double dt, const double mu, double T);
+  Vector4d n_steps(double& time, Vector4d u0, const double dt, const double mu, const int _acc, int N);
+  double err_Initial(double& time, Vector4d u0, const double dt, const double mu, const int _acc, const double T);
 };
 
 

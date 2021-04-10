@@ -68,7 +68,7 @@ Vector4d TimeIntegrator<CalPolicy>::one_step(Vector4d* u, const double dt, const
 }
 
 template<class CalPolicy>
-Vector4d TimeIntegrator<CalPolicy>::n_steps(double& time, Vector4d u0, const double dt, const double mu, int _acc, int N){
+Vector4d TimeIntegrator<CalPolicy>::n_steps(double& time, Vector4d u0, const double dt, const double mu, const int _acc, int N){
   switch(ITable->get_type()){
   case 1: return AB_method(time,u0,dt,mu,_acc,N,*ITable);
   case 2: return AM_method(time,u0,dt,mu,_acc,N,*ITable);
@@ -78,4 +78,14 @@ Vector4d TimeIntegrator<CalPolicy>::n_steps(double& time, Vector4d u0, const dou
   }
 }
 
-
+template<class CalPolicy>
+double TimeIntegrator<CalPolicy>::err_Initial(double& time, Vector4d u0, const double dt, const double mu, const int _acc, const double T){
+  switch(ITable->get_type()){
+  case 1: case 2:  case 3:
+    return err_initial(time,u0,dt,mu,_acc,T,*ITable,ITable->get_type());
+  case 4:
+    return err_initial(time,u0,dt,mu,T,4);
+  default:
+    std::cerr<< "No matching!" << std::endl;
+  }
+}
