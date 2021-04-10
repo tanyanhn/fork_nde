@@ -1,3 +1,5 @@
+#ifndef __MGGS_CAL__
+#define __MGGS_CAL__
 #include "Info.h"
 #include <eigen/Eigen/Dense>
 #include <cmath>
@@ -349,3 +351,8 @@ double err_initial(double* time, Vector4d u0, const double dt, const double mu, 
     exit(-1);
   }
 }
+
+
+#else
+//do nothing
+#endif

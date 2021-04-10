@@ -1,3 +1,5 @@
+#ifndef __MGGS_FACTORY__
+#define __MGGS_FACTORY__
 #include "Info.h"
 #include "cal.h"
 
@@ -13,10 +15,10 @@ class TimeIntegratorFactory{
 };
 
 
-template<template <class> class CalPolicy>
-class TimeIntegrator{
+template<class CalPolicy>
+class TimeIntegrator: public CalPolicy{
  private:
-  Info_Table ITable;
+  Info_Table* ITable;
  public:
   TimeIntegrator();
   ~TimeIntegrator();
@@ -24,3 +26,10 @@ class TimeIntegrator{
   Vector4d n_steps(double& time, Vector4d u0, const double dt, const double mu, int _acc, int N);
   double err_initial(double& time, Vector4d u0, const double dt, const double mu, double T);
 };
+
+
+
+
+#else
+//do nothing
+#endif
