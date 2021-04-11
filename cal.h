@@ -34,9 +34,18 @@ Vector4d BDF_method(double& time, Vector4d u0, const double dt, const double mu,
 Vector4d RK_one_step(Vector4d u, const double dt, const double mu);
 Vector4d RK_method(Vector4d u0, const double dt, const double mu, int N);
 Vector4d RK_method(double& time, Vector4d u0, const double dt, const double mu, int N);
-  
+
+double max_norm(const Vector4d u1, const Vector4d u2);
+double max_norm(const Vector2d u1, const Vector2d u2);
+
+MatrixXd& to_Matrix(double& time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table, int type);
+MatrixXd& to_Matrix(double& time, Vector4d u0, const double dt, const double mu, int N, int type);
+
 double err_initial(double& time, Vector4d u0, const double dt, const double mu, const int _acc, double T, const Info_Table& table, int type);
 double err_initial(double& time, Vector4d u0, const double dt, const double mu, double T, int type);
+
+double err_richardson(double tol, double& time, Vector4d u0, const double dt, const double mu, const int _acc, int N, const Info_Table& table, int type);
+double err_richardson(double tol, double& time, Vector4d u0, const double dt, const double mu, int N, int type);
 
 Vector4d f(Vector4d u, const double mu){
   double v0,v1,v2,v3;
@@ -92,6 +101,23 @@ Vector4d Newton(Vector4d u0, const double mu, const double k, Vector4d b){
   return v;
 }
 
+double max_norm(const Vector4d u1, const Vector4d u2){
+  double y1 = fabs(u1(0)-u2(0));
+  double y2 = fabs(u1(1)-u2(1));
+  if (y1 >= y2)
+    return y1;
+  else
+    return y2;
+}
+
+double max_norm(const Vector2d u1, const Vector2d u2){
+  double y1 = fabs(u1(0)-u2(0));
+  double y2 = fabs(u1(1)-u2(1));
+  if (y1 >= y2)
+    return y1;
+  else
+    return y2;
+}
 
 Vector4d initial_load(const char _file[],double& _mu){
   std::fstream data(_file);
@@ -317,21 +343,25 @@ Vector4d RK_method(double& time, Vector4d u0, const double dt, const double mu, 
 }
 
 double err_initial(double& time, Vector4d u0, const double dt, const double mu, const int _acc, double T, const Info_Table& table, int type){
-  int N = round(T/dt);
-  Vector4d v;
+  int N = floor(T/dt);
+  double rt = T - N*dt;
+  Vector4d v,v1;
   double err = -1;
   switch(type){
   case 1:
     v = AB_method(time,u0,dt,mu,_acc,N,table);
-    err = (u0.head(2)-v.head(2)).norm();
+    v1 = v + rt * f(v,mu);
+    err = max_norm(u0,v1);
     return err;
   case 2:
     v = AM_method(time,u0,dt,mu,_acc,N,table);
-    err = (u0.head(2)-v.head(2)).norm();
+    v1 = v + rt * f(v,mu);
+    err = max_norm(u0,v1);
     return err;
   case 3:
     v = BDF_method(time,u0,dt,mu,_acc,N,table);
-    err = (u0.head(2)-v.head(2)).norm();
+    v1 = v + rt * f(v,mu);
+    err = max_norm(u0,v1);
     return err;
   default:
     std::cerr << "No matching type!" << std::endl;
@@ -341,9 +371,12 @@ double err_initial(double& time, Vector4d u0, const double dt, const double mu, 
 
 double err_initial(double& time, Vector4d u0, const double dt, const double mu, double T, int type){
   if ( type == 4){
-    int N = round(T/dt);
+    int N = floor(T/dt);
+    double rt = T - N*dt;
     Vector4d v = RK_method(time,u0,dt,mu,N);
-    double err = (u0.head(2)-v.head(2)).norm();
+    Vector4d v1;
+    v1 = v + rt * f(v,mu);
+    double err = max_norm(u0,v1);
     return err;
   }
   else{
@@ -352,6 +385,111 @@ double err_initial(double& time, Vector4d u0, const double dt, const double mu, 
   }
 }
 
+MatrixXd& to_Matrix(double& time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table, int type){
+  Vector4d v;
+  std::ifstream is;
+  std::string ss;
+  const char *s;
+  switch(type){
+  case 1:
+    v = AB_method(time,u0,dt,mu,_acc,N,table);
+    ss = "AB_" + std::to_string(_acc) + "_" + std::to_string(N) + ".m";
+    s = ss.c_str();
+    is.open(s);
+    break;
+  case 2:
+    v = AM_method(time,u0,dt,mu,_acc,N,table);
+    ss = "AM_" + std::to_string(_acc) + "_" + std::to_string(N) + ".m";
+    s = ss.c_str();
+    is.open(s);
+    break;
+  case 3:
+    v = BDF_method(time,u0,dt,mu,_acc,N,table);
+    ss = "BDF_" + std::to_string(_acc) + "_" + std::to_string(N) + ".m";
+    s = ss.c_str();
+    is.open(s);
+    break;
+  default:
+    std::cerr << "No matching type!" << std::endl;
+    is.close();
+    exit(-1);    
+  }
+  char a,b,c,d;
+  is >> a >> b >> c >> d;
+  MatrixXd* M = new MatrixXd(N+1,2*(N+1));
+  for (int i = 0; i <= N ; i++)
+    is >> M[0](i,0) >> a >> M[0](i,1) >> b >> c;
+  is.close();
+  return *M;
+}
+
+MatrixXd& to_Matrix(double& time, Vector4d u0, const double dt, const double mu, int N, int type){
+   if (type == 4){
+    Vector4d v = RK_method(time,u0,dt,mu,N);
+    std::ifstream is;
+    std::string ss = "RK_" + std::to_string(N) + ".m";
+    const char *s = ss.c_str();
+    is.open(s);
+    char a,b,c,d;
+    is >> a >> b >> c >> d;
+    MatrixXd* M = new MatrixXd(N+1,2*(N+1));
+    for (int i = 0; i <= N ; i++)
+      is >> M[0](i,0) >> a >> M[0](i,1) >> b >> c;
+    is.close();
+    return *M;
+  }
+  else{
+    std::cerr << "No matching type!" << std::endl;
+    exit(-1);
+  }
+  
+}
+
+double err_richardson(double tol, double& time, Vector4d u0, const double dt, const double mu, const int _acc, int N, const Info_Table& table, int type){
+  MatrixXd& D = to_Matrix(time,u0,dt,mu,_acc,N,table,type);
+  Vector2d v0,v1,v2;
+  double err;
+  v0 << D(N,0),D(N,1);
+  v1 = v0;
+  for (int i = 0 ; i < N ; i++){
+    for (int j = 0 ; j <= i ; j++){
+      double h1 = pow(N-i+j-1,2);
+      double h2 = pow(N-i+j,2);
+      D(N-i+j,2*(j+1)) = (h1*D(N-i+j,2*j)-h2*D(N-i+j-1,2*j))/(h1-h2);
+      D(N-i+j,2*(j+1)+1) = (h1*D(N-i+j,2*j+1)-h2*D(N-i+j-1,2*j+1))/(h1-h2); 
+    }
+    v2 << D(N,2*(i+1)),D(N,2*(i+1)+1);
+    err = max_norm(v1,v2);
+    if (err < tol)
+      return max_norm(v0,v2);
+    else
+      v1 = v2;
+  }
+  return max_norm(v0,v2);
+}
+
+double err_richardson(double tol, double& time, Vector4d u0, const double dt, const double mu, int N, int type){
+  MatrixXd& D = to_Matrix(time,u0,dt,mu,N,type);
+  Vector2d v0,v1,v2;
+  double err;
+  v0 << D(N,0),D(N,1);
+  v1 = v0;
+  for (int i = 0 ; i < N ; i++){
+    for (int j = 0 ; j <= i ; j++){
+      double h1 = pow(N-i+j-1,2);
+      double h2 = pow(N-i+j,2);
+      D(N-i+j,2*(j+1)) = (h1*D(N-i+j,2*j)-h2*D(N-i+j-1,2*j))/(h1-h2);
+      D(N-i+j,2*(j+1)+1) = (h1*D(N-i+j,2*j+1)-h2*D(N-i+j-1,2*j+1))/(h1-h2); 
+    }
+    v2 << D(N,2*(i+1)),D(N,2*(i+1)+1);
+    err = max_norm(v1,v2);
+    if (err < tol)
+      return max_norm(v0,v2);
+    else
+      v1 = v2;
+  }
+  return max_norm(v0,v2);
+}
 
 #else
 //do nothing
