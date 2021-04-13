@@ -44,8 +44,10 @@ MatrixXd& to_Matrix(double& time, Vector4d u0, const double dt, const double mu,
 double err_initial(double& time, Vector4d u0, const double dt, const double mu, const int _acc, double T, const Info_Table& table, int type);
 double err_initial(double& time, Vector4d u0, const double dt, const double mu, double T, int type);
 
-double err_richardson(double tol, double& time, Vector4d u0, const double dt, const double mu, const int _acc, int N, const Info_Table& table, int type);
-double err_richardson(double tol, double& time, Vector4d u0, const double dt, const double mu, int N, int type);
+Vector2d extrapolate(const Vector2d u1, const Vector2d u2, int j);
+
+double err_richardson(double tol, double& time, Vector4d u0, double dt, const double mu, const int _acc, int N, const Info_Table& table, int type);
+double err_richardson(double tol, double& time, Vector4d u0, double dt, const double mu, int N, int type);
 
 Vector4d f(Vector4d u, const double mu){
   double v0,v1,v2,v3;
@@ -445,50 +447,94 @@ MatrixXd& to_Matrix(double& time, Vector4d u0, const double dt, const double mu,
   
 }
 
-double err_richardson(double tol, double& time, Vector4d u0, const double dt, const double mu, const int _acc, int N, const Info_Table& table, int type){
-  MatrixXd& D = to_Matrix(time,u0,dt,mu,_acc,N,table,type);
-  Vector2d v0,v1,v2;
-  double err;
-  v0 << D(N,0),D(N,1);
-  v1 = v0;
-  for (int i = 0 ; i < N ; i++){
-    for (int j = 0 ; j <= i ; j++){
-      double h1 = pow(N-i+j-1,2);
-      double h2 = pow(N-i+j,2);
-      D(N-i+j,2*(j+1)) = (h1*D(N-i+j,2*j)-h2*D(N-i+j-1,2*j))/(h1-h2);
-      D(N-i+j,2*(j+1)+1) = (h1*D(N-i+j,2*j+1)-h2*D(N-i+j-1,2*j+1))/(h1-h2); 
-    }
-    v2 << D(N,2*(i+1)),D(N,2*(i+1)+1);
-    err = max_norm(v1,v2);
-    if (err < tol)
-      return max_norm(v0,v2);
-    else
-      v1 = v2;
-  }
-  return max_norm(v0,v2);
+Vector2d extrapolate(const Vector2d u1, const Vector2d u2, int j){
+  double tmp = pow(4,j);
+  Vector2d v;
+  v(0) = (tmp*u1(0) - u2(0))/(tmp - 1);
+  v(1) = (tmp*u1(1) - u2(1))/(tmp - 1);
+  return v;
 }
 
-double err_richardson(double tol, double& time, Vector4d u0, const double dt, const double mu, int N, int type){
-  MatrixXd& D = to_Matrix(time,u0,dt,mu,N,type);
-  Vector2d v0,v1,v2;
-  double err;
-  v0 << D(N,0),D(N,1);
-  v1 = v0;
-  for (int i = 0 ; i < N ; i++){
-    for (int j = 0 ; j <= i ; j++){
-      double h1 = pow(N-i+j-1,2);
-      double h2 = pow(N-i+j,2);
-      D(N-i+j,2*(j+1)) = (h1*D(N-i+j,2*j)-h2*D(N-i+j-1,2*j))/(h1-h2);
-      D(N-i+j,2*(j+1)+1) = (h1*D(N-i+j,2*j+1)-h2*D(N-i+j-1,2*j+1))/(h1-h2); 
-    }
-    v2 << D(N,2*(i+1)),D(N,2*(i+1)+1);
-    err = max_norm(v1,v2);
-    if (err < tol)
-      return max_norm(v0,v2);
-    else
-      v1 = v2;
+double err_richardson(double tol, double& time, Vector4d u0,double dt, const double mu, const int _acc, int N, const Info_Table& table, int type){
+  Vector4d (*pf1)(Vector4d,const double,const double,int,int,const Info_Table&);
+  Vector4d (*pf2)(double&,Vector4d,const double,const double,int,int,const Info_Table&);
+  switch(type){
+  case 1:
+    pf1 = AB_method;
+    pf2 = AB_method;
+    break;
+  case 2:
+    pf1 = AM_method;
+    pf2 = AM_method;
+    break;
+  case 3:
+    pf1 = BDF_method;
+    pf2 = BDF_method;
+    break;
+  default:
+    std::cerr << "No matching type!" << std::endl;
+    exit(-1);
   }
-  return max_norm(v0,v2);
+  double err;
+  int i;
+  Vector2d uu;
+  typedef Matrix<Vector2d,Dynamic,1> VectorXv;
+  VectorXv v1(1),v2(1);
+  Vector4d u = pf2(time,u0,dt,mu,_acc,N,table);
+  v1(0) << u(0),u(1);
+  uu = v1(0);
+  dt = 0.5*dt;
+  N = 2*N;
+  for ( i = 2; i < 10 ; i++){
+    v2.resize(i,1);
+    u = pf1(u0,dt,mu,_acc,N,table);
+    v2(0) << u(0),u(1);
+    for (int j = 1 ; j < i ; j++)
+      v2(j) = extrapolate(v2(j-1),v1(j-1),j);
+    err = max_norm(v2(i-1),v1(i-2));
+    if (err < tol)
+      break;
+    v1.resize(i,1);
+    v1 = v2;
+    dt = 0.5*dt;
+    N = 2*N;
+  }
+  return max_norm(uu,v2(i-1));
+}
+
+double err_richardson(double tol, double& time, Vector4d u0, double dt, const double mu, int N, int type){
+  if (type == 4){
+    double err;
+    typedef Matrix<Vector2d,Dynamic,1> VectorXv;
+    int i;
+    Vector2d uu;
+    VectorXv v1(1),v2(1);
+    Vector4d u = RK_method(time,u0,dt,mu,N);
+    v1(0) << u(0),u(1);
+    uu = v1(0);
+    dt = 0.5*dt;
+    N = 2*N;
+    for (i = 2; i < 10 ; i++){
+      v2.resize(i,1);
+      u = RK_method(u0,dt,mu,N);
+      v2(0) << u(0),u(1);
+      for (int j = 1 ; j < i ; j++)
+	v2(j) = extrapolate(v2(j-1),v1(j-1),j);
+      err = max_norm(v2(i-1),v1(i-2));
+      if (err < tol)
+	break;
+      v1.resize(i,1);
+      v1 = v2;
+      dt = 0.5*dt;
+      N = 2*N;
+    }
+    return max_norm(uu,v2(i-1));
+  }
+  else{
+    std::cerr << "No matching type!" << std::endl;
+    exit(-1);
+  }
+  
 }
 
 #else

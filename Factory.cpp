@@ -88,7 +88,7 @@ Vector4d TimeIntegrator<CalPolicy>::n_steps(double& time, Vector4d u0, const dou
 template<class CalPolicy>
 double TimeIntegrator<CalPolicy>::err_Initial(double& time, Vector4d u0, const double dt, const double mu, const int _acc, const double T){
   switch(ITable->get_type()){
-  case 1: case 2:  case 3:
+  case 1: case 2: case 3:
     return err_initial(time,u0,dt,mu,_acc,T,*ITable,ITable->get_type());
   case 4:
     return err_initial(time,u0,dt,mu,T,4);
@@ -96,3 +96,16 @@ double TimeIntegrator<CalPolicy>::err_Initial(double& time, Vector4d u0, const d
     std::cerr<< "No matching!" << std::endl;
   }
 }
+
+template<class CalPolicy>
+double TimeIntegrator<CalPolicy>::err_Richardson(double tol, double& time, Vector4d u0, double dt, const double mu, const int _acc, int N){
+  switch(ITable->get_type()){
+  case 1: case 2: case 3:
+    return err_richardson(tol,time,u0,dt,mu,_acc,N,*ITable,ITable->get_type());
+  case 4:
+    return err_richardson(tol,time,u0,dt,mu,N,4);
+  default:
+    std::cerr<< "No matching!" << std::endl;
+  }
+}
+
