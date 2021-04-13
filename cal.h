@@ -49,6 +49,9 @@ Vector2d extrapolate(const Vector2d u1, const Vector2d u2, int j);
 double err_richardson(double tol, double& time, Vector4d u0, double dt, const double mu, const int _acc, int N, const Info_Table& table, int type);
 double err_richardson(double tol, double& time, Vector4d u0, double dt, const double mu, int N, int type);
 
+double grid_refine_err1(Vector4d u0, double dt, const double mu, const int _acc, const double T, const Info_Table& table, int type);
+double grid_refine_err1(Vector4d u0, double dt, const double mu, const double T, int type);
+
 Vector4d f(Vector4d u, const double mu){
   double v0,v1,v2,v3;
   double tmp1 = u(0) + mu - 1;
@@ -534,7 +537,50 @@ double err_richardson(double tol, double& time, Vector4d u0, double dt, const do
     std::cerr << "No matching type!" << std::endl;
     exit(-1);
   }
-  
+}
+
+double grid_refine_err1(Vector4d u0, double dt, const double mu, const int _acc, const double T, const Info_Table& table, int type){
+  const int N = 5;
+  std::string ss;
+  switch (type){
+  case 1:
+    ss = "AB_" + std::to_string(_acc) + "_analysis.m";
+    break;
+  case 2:
+    ss = "AM_" + std::to_string(_acc) + "_analysis.m";
+    break;
+  case 3:
+    ss = "BDF_" + std::to_string(_acc) + "_analysis.m";
+    break;
+  default:
+    std::cerr << "No matching type!" << std::endl;
+    exit(-1);
+  }
+  std::ofstream os;
+  const char *s = ss.c_str();
+  os.open(s);
+  os << "x=[\n";
+  double time;
+  double* err = new double[N];
+  for (int i = 0; i < N ; i++){
+    err[i] = err_initial(time,u0,dt,mu,_acc,T,table,type);
+    int step = round(T/dt);
+    os << dt << "," << step << "," << time << "," << err[i] << ";\n";
+    dt = 0.5 * dt;
+  }
+  os << "];\n";
+  os << "dt = x(:,1);\n";
+  os << "steps = x(:,2);\n";
+  os << "CPU_time = x(:,3);\n";
+  os << "err = x(:,4);\n";
+  //plot
+  os.close();
+  double mult = 1;
+  for (int i = 0; i < N - 1 ; i++){
+    double cr = err[i]/pow(err[i+1],_acc);
+    mult *= cr;
+  }
+  return pow(mult,1.0/(N - 1));
 }
 
 #else
