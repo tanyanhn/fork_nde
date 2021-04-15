@@ -540,7 +540,7 @@ double err_richardson(double tol, double& time, Vector4d u0, double dt, const do
 }
 
 double grid_refine_err1(Vector4d u0, double dt, const double mu, const int _acc, const double T, const Info_Table& table, int type){
-  const int N = 5;
+  const int N = 4;
   std::string ss;
   switch (type){
   case 1:
@@ -576,12 +576,45 @@ double grid_refine_err1(Vector4d u0, double dt, const double mu, const int _acc,
   //plot
   os.close();
   double mult = 1;
+  /*for (int i = 0; i < N - 1 ; i++){
+    double cr = err[i]/pow(err[i+1],_acc);
+    mult *= cr;
+  }
+  return pow(mult,1.0/(N - 1));*/
+  return -1;
+}
+
+double grid_refine_err1(Vector4d u0, double dt, const double mu, const double T, int type){
+  const int N = 4;
+  std::string ss = "RK_analysis.m";
+  std::ofstream os;
+  const char *s = ss.c_str();
+  os.open(s);
+  os << "x=[\n";
+  double time;
+  double* err = new double[N];
+  for (int i = 0; i < N ; i++){
+    err[i] = err_initial(time,u0,dt,mu,T,4);
+    int step = round(T/dt);
+    os << dt << "," << step << "," << time << "," << err[i] << ";\n";
+    dt = 0.5 * dt;
+  }
+  os << "];\n";
+  os << "dt = x(:,1);\n";
+  os << "steps = x(:,2);\n";
+  os << "CPU_time = x(:,3);\n";
+  os << "err = x(:,4);\n";
+  //plot
+  os.close();
+  /*double mult = 1;
   for (int i = 0; i < N - 1 ; i++){
     double cr = err[i]/pow(err[i+1],_acc);
     mult *= cr;
   }
-  return pow(mult,1.0/(N - 1));
+  return pow(mult,1.0/(N - 1));*/
+  return -1;
 }
+
 
 #else
 //do nothing
