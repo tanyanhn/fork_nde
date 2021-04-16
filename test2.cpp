@@ -10,13 +10,15 @@ int main(){
   Vector4d u0;
   double mu;
   double T;
-  u0 = initial_load("Initial1",mu,T);
-  double dt = 0.0002;
+  u0 = initial_load("Initial2",mu,T);
+  double dt = 0.001;
   double time = 0;
   //double err = err_initial(time,u0,dt,mu,3,T,BDF,3);
-  double cr = grid_refine_err1(u0,dt,mu,T,4);
-  std::cout << cr << std::endl;
-  
+  double err = grid_refine_err2(10e-12,u0,dt,mu,10000,4);
+  std::cout << err << std::endl;
+
+
+ 
   /* typedef TimeIntegratorFactory<TimeIntegrator<Runge_Kutta>> RK_C;
   RK_C A;
   std::cout << (A.get_pointer()->get_table())->get_type() << std::endl;
@@ -29,4 +31,4 @@ int main(){
   std::cout << time << std::endl;
   std::cout << v << std::endl;*/
   return 0;
-}
+};

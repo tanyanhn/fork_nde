@@ -49,8 +49,12 @@ Vector2d extrapolate(const Vector2d u1, const Vector2d u2, int j);
 double err_richardson(double tol, double& time, Vector4d u0, double dt, const double mu, const int _acc, int N, const Info_Table& table, int type);
 double err_richardson(double tol, double& time, Vector4d u0, double dt, const double mu, int N, int type);
 
+
 double grid_refine_err1(Vector4d u0, double dt, const double mu, const int _acc, const double T, const Info_Table& table, int type);
 double grid_refine_err1(Vector4d u0, double dt, const double mu, const double T, int type);
+double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, const int _acc, int N,const Info_Table& table, int type);
+double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, int N, int type);
+
 
 Vector4d f(Vector4d u, const double mu){
   double v0,v1,v2,v3;
@@ -544,13 +548,13 @@ double grid_refine_err1(Vector4d u0, double dt, const double mu, const int _acc,
   std::string ss;
   switch (type){
   case 1:
-    ss = "AB_" + std::to_string(_acc) + "_analysis.m";
+    ss = "AB_" + std::to_string(_acc) + "_Init1_analysis.m";
     break;
   case 2:
-    ss = "AM_" + std::to_string(_acc) + "_analysis.m";
+    ss = "AM_" + std::to_string(_acc) + "_Init1_analysis.m";
     break;
   case 3:
-    ss = "BDF_" + std::to_string(_acc) + "_analysis.m";
+    ss = "BDF_" + std::to_string(_acc) + "_Init1_analysis.m";
     break;
   default:
     std::cerr << "No matching type!" << std::endl;
@@ -586,7 +590,7 @@ double grid_refine_err1(Vector4d u0, double dt, const double mu, const int _acc,
 
 double grid_refine_err1(Vector4d u0, double dt, const double mu, const double T, int type){
   const int N = 4;
-  std::string ss = "RK_analysis.m";
+  std::string ss = "RK_Init1_analysis.m";
   std::ofstream os;
   const char *s = ss.c_str();
   os.open(s);
@@ -615,6 +619,115 @@ double grid_refine_err1(Vector4d u0, double dt, const double mu, const double T,
   return -1;
 }
 
+double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, const int _acc, int N,const Info_Table& table, int type){
+  Vector4d (*pf)(double&,Vector4d,const double,const double,int,int,const Info_Table&);
+  std::string ss;
+  switch(type){
+  case 1:
+    pf = AB_method;
+    ss = "AB_" + std::to_string(_acc) + "_Init2_analysis.m";
+    break;
+  case 2:
+    pf = AM_method;
+    ss = "AM_" + std::to_string(_acc) + "_Init2_analysis.m";
+    break;
+  case 3:
+    pf = BDF_method;
+    ss = "BDF_" + std::to_string(_acc) + "_Init2_analysis.m";
+    break;
+  default:
+    std::cerr << "No matching type!" << std::endl;
+    exit(-1);
+  }
+  std::ofstream os;
+  const char *s = ss.c_str();
+  os.open(s);
+  os << "x=[\n";
+  double err,time;
+  int i;
+  Vector2d uu;
+  typedef Matrix<Vector2d,Dynamic,1> VectorXv;
+  VectorXv v1(1),v2(1);
+  Vector4d u = pf(time,u0,dt,mu,_acc,N,table);
+  os << dt << "," << N << "," << time << "," << u[0] << "," << u[1] << ";\n";
+  v1(0) << u(0),u(1);
+  uu = v1(0);
+  dt = 0.5*dt;
+  N = 2*N;
+  for ( i = 2; i < 10 ; i++){
+    v2.resize(i,1);
+    u = pf(time,u0,dt,mu,_acc,N,table);
+    os << dt << "," << N << "," << time << "," << u[0] << "," << u[1] << ";\n";
+    v2(0) << u(0),u(1);
+    for (int j = 1 ; j < i ; j++)
+      v2(j) = extrapolate(v2(j-1),v1(j-1),j);
+    err = max_norm(v2(i-1),v1(i-2));
+    if (err < tol)
+      break;
+    v1.resize(i,1);
+    v1 = v2;
+    dt = 0.5*dt;
+    N = 2*N;
+  }
+  os << "];\n";
+  os << "dt = x(:,1);\n";
+  os << "steps = x(:,2);\n";
+  os << "CPU_time = x(:,3);\n";
+  os << "u = [" << v2(i-1)(0) << "," << v2(i-1)(1) << "];\n";
+  os << "[err,index]=max(abs(x(:,4:5)-u),[],2);\n";
+  //plot
+  os.close();
+  return max_norm(uu,v2(i-1));
+}
+
+double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, int N, int type){
+   if (type == 4){
+    double err,time;
+    std::string ss = "RK_Init2_analysis.m";
+    std::ofstream os;
+    const char *s = ss.c_str();
+    os.open(s);
+    os << "x=[\n";
+    typedef Matrix<Vector2d,Dynamic,1> VectorXv;
+    int i;
+    Vector2d uu;
+    VectorXv v1(1),v2(1);
+    Vector4d u = RK_method(time,u0,dt,mu,N);
+    os << dt << "," << N << "," << time << "," << u[0] << "," << u[1] << ";\n";
+    v1(0) << u(0),u(1);
+    uu = v1(0);
+    dt = 0.5*dt;
+    N = 2*N;
+    for (i = 2; i < 10 ; i++){
+      v2.resize(i,1);
+      u = RK_method(time,u0,dt,mu,N);
+      os << dt << "," << N << "," << time << "," << u[0] << "," << u[1] << ";\n";
+      v2(0) << u(0),u(1);
+      for (int j = 1 ; j < i ; j++)
+	v2(j) = extrapolate(v2(j-1),v1(j-1),j);
+      err = max_norm(v2(i-1),v1(i-2));
+      if (err < tol)
+	break;
+      v1.resize(i,1);
+      v1 = v2;
+      dt = 0.5*dt;
+      N = 2*N;
+    }
+    os << "];\n";
+    os << "dt = x(:,1);\n";
+    os << "steps = x(:,2);\n";
+    os << "CPU_time = x(:,3);\n";
+    os << "u = [" << v2(i-1)(0) << "," << v2(i-1)(1) << "];\n";
+    os << "[err,index]=max(abs(x(:,4:5)-u),[],2);\n";
+    //plot
+    os.close();
+    return max_norm(uu,v2(i-1));
+  }
+  else{
+    std::cerr << "No matching type!" << std::endl;
+    exit(-1);
+  }
+}
 
 #else
 //do nothing
