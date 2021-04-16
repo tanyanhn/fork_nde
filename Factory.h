@@ -14,18 +14,20 @@ class TimeIntegratorFactory{
 };
 
 
-template<class CalPolicy>
-class TimeIntegrator: public CalPolicy{
+template<class CalPolicy, int acc>
+class Method: public CalPolicy{
  private:
   Info_Table* ITable;
  public:
-  TimeIntegrator();
-  ~TimeIntegrator();
+  Method();
+  ~Method();
   Info_Table* get_table();
-  Vector4d one_step(Vector4d* u, const double dt, const double mu, int _acc);
-  Vector4d n_steps(double& time, Vector4d u0, const double dt, const double mu, const int _acc, int N);
-  double err_Initial(double& time, Vector4d u0, const double dt, const double mu, const int _acc, const double T);
-  double err_Richardson(double tol, double& time, Vector4d u0, double dt, const double mu, const int _acc, int N);
+  Vector4d one_step(Vector4d* u, const double dt, const double mu);
+  Vector4d n_steps(double& time, Vector4d u0, const double dt, const double mu, int N);
+  double err_Initial(double& time, Vector4d u0, const double dt, const double mu, const double T);
+  double err_Richardson(double tol, double& time, Vector4d u0, double dt, const double mu, int N);
+  double Grid_Refine1(Vector4d u0, double dt, const double mu, const double T);
+  double Grid_Refine2(double tol,Vector4d u0, double dt, const double mu, int N);
 };
 
 

@@ -50,46 +50,46 @@ class Runge_Kutta{
   }
 };
 
-template<class CalPolicy>
-TimeIntegrator<CalPolicy>::TimeIntegrator(){
+template<class CalPolicy,int acc>
+Method<CalPolicy,acc>::Method(){
   ITable = CalPolicy().create_table();
 }
 
-template<class CalPolicy>
-TimeIntegrator<CalPolicy>::~TimeIntegrator(){}
+template<class CalPolicy,int acc>
+Method<CalPolicy,acc>::~Method(){}
  
-template<class CalPolicy>
-Info_Table* TimeIntegrator<CalPolicy>::get_table(){
+template<class CalPolicy,int acc>
+Info_Table* Method<CalPolicy,acc>::get_table(){
   return ITable;
 }
 
-template<class CalPolicy>
-Vector4d TimeIntegrator<CalPolicy>::one_step(Vector4d* u, const double dt, const double mu, int _acc){
+template<class CalPolicy,int acc>
+Vector4d Method<CalPolicy,acc>::one_step(Vector4d* u, const double dt, const double mu){
   switch(ITable->get_type()){
-  case 1: return AB_one_step(u,dt,mu,_acc,*ITable);
-  case 2: return AM_one_step(u,dt,mu,_acc,*ITable);
-  case 3: return BDF_one_step(u,dt,mu,_acc,*ITable);
+  case 1: return AB_one_step(u,dt,mu,acc,*ITable);
+  case 2: return AM_one_step(u,dt,mu,acc,*ITable);
+  case 3: return BDF_one_step(u,dt,mu,acc,*ITable);
   case 4: return RK_one_step(u[0],dt,mu);
   default: std::cerr << "No matching!"  << std::endl;
   }
 }
 
-template<class CalPolicy>
-Vector4d TimeIntegrator<CalPolicy>::n_steps(double& time, Vector4d u0, const double dt, const double mu, const int _acc, int N){
+template<class CalPolicy,int acc>
+Vector4d Method<CalPolicy,acc>::n_steps(double& time, Vector4d u0, const double dt, const double mu, int N){
   switch(ITable->get_type()){
-  case 1: return AB_method(time,u0,dt,mu,_acc,N,*ITable);
-  case 2: return AM_method(time,u0,dt,mu,_acc,N,*ITable);
-  case 3: return BDF_method(time,u0,dt,mu,_acc,N,*ITable);
+  case 1: return AB_method(time,u0,dt,mu,acc,N,*ITable);
+  case 2: return AM_method(time,u0,dt,mu,acc,N,*ITable);
+  case 3: return BDF_method(time,u0,dt,mu,acc,N,*ITable);
   case 4: return RK_method(time,u0,dt,mu,N);
   default: std::cerr << "No matching!"  << std::endl;
   }
 }
 
-template<class CalPolicy>
-double TimeIntegrator<CalPolicy>::err_Initial(double& time, Vector4d u0, const double dt, const double mu, const int _acc, const double T){
+template<class CalPolicy,int acc>
+double Method<CalPolicy,acc>::err_Initial(double& time, Vector4d u0, const double dt, const double mu, const double T){
   switch(ITable->get_type()){
   case 1: case 2: case 3:
-    return err_initial(time,u0,dt,mu,_acc,T,*ITable,ITable->get_type());
+    return err_initial(time,u0,dt,mu,acc,T,*ITable,ITable->get_type());
   case 4:
     return err_initial(time,u0,dt,mu,T,4);
   default:
@@ -97,11 +97,11 @@ double TimeIntegrator<CalPolicy>::err_Initial(double& time, Vector4d u0, const d
   }
 }
 
-template<class CalPolicy>
-double TimeIntegrator<CalPolicy>::err_Richardson(double tol, double& time, Vector4d u0, double dt, const double mu, const int _acc, int N){
+template<class CalPolicy,int acc>
+double Method<CalPolicy,acc>::err_Richardson(double tol, double& time, Vector4d u0, double dt, const double mu, int N){
   switch(ITable->get_type()){
   case 1: case 2: case 3:
-    return err_richardson(tol,time,u0,dt,mu,_acc,N,*ITable,ITable->get_type());
+    return err_richardson(tol,time,u0,dt,mu,acc,N,*ITable,ITable->get_type());
   case 4:
     return err_richardson(tol,time,u0,dt,mu,N,4);
   default:
@@ -109,3 +109,32 @@ double TimeIntegrator<CalPolicy>::err_Richardson(double tol, double& time, Vecto
   }
 }
 
+template<class CalPolicy,int acc>
+double Method<CalPolicy,acc>::Grid_Refine1(Vector4d u0, double dt, const double mu, const double T){
+  switch(ITable->get_type()){
+  case 1: case 2: case 3:
+    return grid_refine_err1(u0,dt,mu,acc,T,*ITable,ITable->get_type());
+  case 4:
+    return grid_refine_err1(u0,dt,mu,T,4);
+  default:
+    std::cerr<< "No matching!" << std::endl;
+  }
+}
+
+
+
+
+
+template<class CalPolicy,int acc>
+double Method<CalPolicy,acc>::Grid_Refine2(double tol,Vector4d u0, double dt, const double mu, int N){
+  switch(ITable->get_type()){
+  case 1: case 2: case 3:
+    return grid_refine_err2(tol,u0,dt,mu,acc,N,*ITable,ITable->get_type());
+  case 4:
+    return grid_refine_err2(tol,u0,dt,mu,N,4);
+  default:
+    std::cerr<< "No matching!" << std::endl;
+  }
+
+      
+}
