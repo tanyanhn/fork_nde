@@ -1,17 +1,7 @@
 #include "Factory.h"
 
-template<class T>
-TimeIntegratorFactory<T>::TimeIntegratorFactory(){
-  pInstance_ = new T;
-}
-
-template<class T>
-TimeIntegratorFactory<T>::~TimeIntegratorFactory(){};
-
-template<class T>
-T* TimeIntegratorFactory<T>::get_pointer(){
-  return pInstance_;
-}
+TimeIntegrator::TimeIntegrator(){};
+TimeIntegrator::~TimeIntegrator(){};
 
 
 class Adams_Bashforth{
@@ -135,6 +125,83 @@ double Method<CalPolicy,acc>::Grid_Refine2(double tol,Vector4d u0, double dt, co
   default:
     std::cerr<< "No matching!" << std::endl;
   }
+}
 
-      
+TimeIntegratorFactory* TimeIntegratorFactory::pInstance_ = 0;
+
+TimeIntegratorFactory* TimeIntegratorFactory::Instance(){
+  if (!pInstance_)
+    pInstance_ = new TimeIntegratorFactory;
+  return pInstance_;
+}
+
+TimeIntegratorFactory::TimeIntegratorFactory(){};
+TimeIntegratorFactory::TimeIntegratorFactory(const TimeIntegratorFactory&){};
+
+namespace{
+  template <int acc>
+  TimeIntegrator* CreateAB(){
+    return new Method<Adams_Bashforth,acc>;
+  }
+
+  template <int acc>
+  TimeIntegrator* CreateAM(){
+    return new Method<Adams_Moulton,acc>;
+  }
+
+  template <int acc>
+  TimeIntegrator* CreateBDF(){
+    return new Method<BDFs,acc>;
+  }
+
+  TimeIntegrator* CreateRK(){
+    return new Method<Runge_Kutta,0>;
+  }
+
+  const bool _AB1_registered =
+    TimeIntegratorFactory::Instance()->RegisterIntegrator(std::pair<const std::string,int>("Adams_Bashforth",1),CreateAB<1>);
+  const bool _AB2_registered =
+    TimeIntegratorFactory::Instance()->RegisterIntegrator(std::pair<const std::string,int>("Adams_Bashforth",2),CreateAB<2>);
+  const bool _AB3_registered =
+    TimeIntegratorFactory::Instance()->RegisterIntegrator(std::pair<const std::string,int>("Adams_Bashforth",3),CreateAB<3>);
+  const bool _AB4_registered =
+    TimeIntegratorFactory::Instance()->RegisterIntegrator(std::pair<const std::string,int>("Adams_Bashforth",4),CreateAB<4>);
+
+  const bool _AM2_registered =
+    TimeIntegratorFactory::Instance()->RegisterIntegrator(std::pair<const std::string,int>("Adams_Moulton",2),CreateAM<2>);
+  const bool _AM3_registered =
+    TimeIntegratorFactory::Instance()->RegisterIntegrator(std::pair<const std::string,int>("Adams_Moulton",3),CreateAM<3>);
+  const bool _AM4_registered =
+    TimeIntegratorFactory::Instance()->RegisterIntegrator(std::pair<const std::string,int>("Adams_Moulton",4),CreateAM<4>);
+  const bool _AM5_registered =
+    TimeIntegratorFactory::Instance()->RegisterIntegrator(std::pair<const std::string,int>("Adams_Moulton",5),CreateAM<5>);
+
+  const bool _BDF1_registered =
+    TimeIntegratorFactory::Instance()->RegisterIntegrator(std::pair<const std::string,int>("BDFs",1),CreateBDF<1>);
+  const bool _BDF2_registered =
+    TimeIntegratorFactory::Instance()->RegisterIntegrator(std::pair<const std::string,int>("BDFs",2),CreateBDF<2>);
+  const bool _BDF3_registered =
+    TimeIntegratorFactory::Instance()->RegisterIntegrator(std::pair<const std::string,int>("BDFs",3),CreateBDF<3>);
+  const bool _BDF4_registered =
+    TimeIntegratorFactory::Instance()->RegisterIntegrator(std::pair<const std::string,int>("BDFs",4),CreateBDF<4>);
+
+  const bool _RK_registered =
+    TimeIntegratorFactory::Instance()->RegisterIntegrator(std::pair<const std::string,int>("Runge_Kutta",0),CreateRK);  
+}
+
+bool TimeIntegratorFactory::RegisterIntegrator(const std::pair<const std::string,int> &MethodId, IntegratorCreator createFn){
+  return callbacks_.insert(CallbackMap::value_type(MethodId,createFn)).second;
+}
+
+bool TimeIntegratorFactory::UnregisterIntegrator(const std::pair<const std::string,int> &MethodId){
+  return callbacks_.erase(MethodId) == 1;
+}
+
+
+TimeIntegrator* TimeIntegratorFactory::CreateIntegrator(const std::pair<const std::string,int> &MethodId) const{
+  CallbackMap::const_iterator i = callbacks_.find(MethodId);
+  if (i == callbacks_.cend()){
+    throw std::runtime_error("Unknown Method ID");
+  }
+  return (i->second());
 }
