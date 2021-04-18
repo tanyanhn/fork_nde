@@ -1,0 +1,4 @@
+Index	Method		Order	dt	Initial		N	err_analysis	grid_refine_analysis
+1	BDFs		3	1e-4	Initial2	2000	1		1
+2	Adams_Bashforth	1	0.00002	Initial1	1000000	0		1
+3	Runge_Kutta	0	1e-4	Initial1	200000	1		0

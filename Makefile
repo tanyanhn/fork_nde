@@ -13,3 +13,12 @@ cleanm:
 	rm *.o
 	rm *.m
 	rm main
+run_test:
+	./main Inputdata/Input_test
+story: doc.tex
+	xelatex doc
+	xelatex doc
+cleanr:
+	rm *.pdf
+	rm *.aux
+	rm *.log

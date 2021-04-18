@@ -3,24 +3,17 @@
 
 #define tol 1e-8
 
-void getInput(std::fstream &_Input, int &_Index, std::string &_Method,
-	      int &_Order, double &_dt, std::string &_Initial, int &_N,
-	      int &_err_analysis, int &_grid_refine_analysis){
-  _Input >> _Index >> _Method >> _Order
-	 >> _dt >> _Initial  >> _N
-	 >>  _err_analysis >>  _grid_refine_analysis;
-}
-
-
 int main(int argc, char* argv[]){
-  std::string garbage,Method,Initial;
+  std::string garbage,Method,Initial,Inputdata;
   double dt,mu,T,time,result;
   Vector4d u0,v;
   int Index,Order,N;
   int err_analysis,grid_refine_analysis;
-  std::fstream Input("Input");
+  std::fstream Input(argv[1]);
   while (getline(Input,garbage,'\n')){
-    getInput(Input,Index,Method,Order,dt,Initial,N,err_analysis,grid_refine_analysis);
+    Input >> Index >> Method >> Order
+	 >> dt >> Initial  >> N
+	 >>  err_analysis >>  grid_refine_analysis;
     TimeIntegrator *pIntegrator = TimeIntegratorFactory::Instance()->
       CreateIntegrator(std::make_pair(Method,Order));
     u0 = initial_load(Initial,mu,T);
@@ -36,14 +29,14 @@ int main(int argc, char* argv[]){
 	  result = pIntegrator->err_Initial(time,u0,dt,mu,T);
 	  std::cout << "Problem " << Index << ": "
 		    << "err: " << result << ",CPU time: " << time << "(ms)" << std::endl
-		    << "orbit can be saw by runing .m file" << std::endl;
+		    << "        orbit can be saw by runing .m file" << std::endl;
 	}
 	else{
 	  v = pIntegrator->n_steps(time,u0,dt,mu,N);
 	  std::cout << "Problem " << Index << ": "
 		    << "relust: (" << v(0) << "," << v(1) << ",0)"
 		    <<",CPU time: " << time << "(ms)" << std::endl
-		    << "orbit can be saw by runing .m file" << std::endl;
+		    << "        orbit can be saw by runing .m file" << std::endl;
 	}
       }
     }
@@ -59,14 +52,14 @@ int main(int argc, char* argv[]){
 	  result = pIntegrator->err_Richardson(tol,time,u0,dt,mu,N);
 	  std::cout << "Problem " << Index << ": "
 		    << "err: " << result << ",CPU time: " << time << "(ms)" << std::endl
-		    << "orbit can be saw by runing .m file" << std::endl;
+		    << "        orbit can be saw by runing .m file" << std::endl;
 	}
 	else{
 	  v = pIntegrator->n_steps(time,u0,dt,mu,N);
 	  std::cout << "Problem " << Index << ": "
 		    << "relust: (" << v(0) << "," << v(1) << ",0)"
 		    <<",CPU time: " << time << "(ms)" << std::endl
-		    << "orbit can be saw by runing .m file" << std::endl;
+		    << "        orbit can be saw by runing .m file" << std::endl;
 	}
       }
     }
