@@ -14,8 +14,8 @@ Vector4d F(Vector4d u, const double mu, const double k, Vector4d b);
 Matrix4d DF(Vector4d u, const double mu, const double k);
 Vector4d Newton(Vector4d u0, const double mu, const double k, Vector4d b);
 
-Vector4d initial_load(const char _file[], double& _mu);
-Vector4d initial_load(const char _file[], double& _mu, double& _T);
+Vector4d initial_load(const std::string &_file, double& _mu);
+Vector4d initial_load(const std::string &_file, double& _mu, double& _T);
 
 Vector4d AB_one_step(Vector4d* u, const double dt, const double mu, int _acc, const Info& info);
 Vector4d AB_one_step(Vector4d* u, const double dt, const double mu, int _acc, const Info_Table& table);
@@ -129,7 +129,7 @@ double max_norm(const Vector2d u1, const Vector2d u2){
     return y2;
 }
 
-Vector4d initial_load(const char _file[],double& _mu){
+Vector4d initial_load(const std::string &_file, double& _mu){
   std::fstream data(_file);
   data >>_mu;
   Vector4d u;
@@ -139,7 +139,7 @@ Vector4d initial_load(const char _file[],double& _mu){
   return u;
 }
 
-Vector4d initial_load(const char _file[], double& _mu, double& _T){
+Vector4d initial_load(const std::string &_file, double& _mu, double& _T){
   std::fstream data(_file);
   data >>_mu;
   Vector4d u;

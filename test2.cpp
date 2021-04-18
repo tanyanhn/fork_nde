@@ -18,16 +18,20 @@ int main(){
   std::cout << err << std::endl;*/
 
 
- 
-  typedef Method<Adams_Bashforth,4> AB_C;
-  AB_C A;
-  std::cout << A.get_table()->get_type() << std::endl;
+  std::string method = "Adams_Bashforth";
+  int order = 4;
+  std::string initial = "Initial2";
+  //typedef std::pair<const std::string,int> fpair;
+  TimeIntegrator *pIntegrator = TimeIntegratorFactory::Instance()->
+    CreateIntegrator(std::make_pair(method,order));
+  
+  std::cout << pIntegrator->get_table()->get_type() << std::endl;
   Vector4d u0;
   double mu,T;
-  u0 = initial_load("Initial2",mu,T);
+  u0 = initial_load(initial,mu,T);
   double dt = 0.001;
   double time;
-  Vector4d v = A.n_steps(time,u0,dt,mu,20000);
+  Vector4d v = pIntegrator->n_steps(time,u0,dt,mu,20000);
   std::cout << time << std::endl;
   std::cout << v << std::endl;
   return 0;
