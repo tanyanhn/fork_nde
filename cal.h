@@ -39,9 +39,6 @@ Vector4d RK_method(double& time, Vector4d u0, const double dt, const double mu, 
 double max_norm(const Vector4d u1, const Vector4d u2);
 double max_norm(const Vector2d u1, const Vector2d u2);
 
-MatrixXd& to_Matrix(double& time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table, int type);
-MatrixXd& to_Matrix(double& time, Vector4d u0, const double dt, const double mu, int N, int type);
-
 double err_initial(double& time, Vector4d u0, const double dt, const double mu, const int _acc, double T, const Info_Table& table, int type);
 double err_initial(double& time, Vector4d u0, const double dt, const double mu, double T, int type);
 
@@ -51,8 +48,8 @@ double err_richardson(double tol, double& time, Vector4d u0, double dt, const do
 double err_richardson(double tol, double& time, Vector4d u0, double dt, const double mu, int N, int type);
 
 
-double grid_refine_err1(Vector4d u0, double dt, const double mu, const int _acc, const double T, const Info_Table& table, int type);
-double grid_refine_err1(Vector4d u0, double dt, const double mu, const double T, int type);
+std::pair<double,double> grid_refine_err1(Vector4d u0, double dt, const double mu, const int _acc, const double T, const Info_Table& table, int type);
+std::pair<double,double> grid_refine_err1(Vector4d u0, double dt, const double mu, const double T, int type);
 double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, const int _acc, int N,const Info_Table& table, int type);
 double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, int N, int type);
 
@@ -395,66 +392,6 @@ double err_initial(double& time, Vector4d u0, const double dt, const double mu, 
   }
 }
 
-MatrixXd& to_Matrix(double& time, Vector4d u0, const double dt, const double mu, int _acc, int N, const Info_Table& table, int type){
-  Vector4d v;
-  std::ifstream is;
-  std::string ss;
-  const char *s;
-  switch(type){
-  case 1:
-    v = AB_method(time,u0,dt,mu,_acc,N,table);
-    ss = "AB_" + std::to_string(_acc) + "_" + std::to_string(N) + ".m";
-    s = ss.c_str();
-    is.open(s);
-    break;
-  case 2:
-    v = AM_method(time,u0,dt,mu,_acc,N,table);
-    ss = "AM_" + std::to_string(_acc) + "_" + std::to_string(N) + ".m";
-    s = ss.c_str();
-    is.open(s);
-    break;
-  case 3:
-    v = BDF_method(time,u0,dt,mu,_acc,N,table);
-    ss = "BDF_" + std::to_string(_acc) + "_" + std::to_string(N) + ".m";
-    s = ss.c_str();
-    is.open(s);
-    break;
-  default:
-    std::cerr << "No matching type!" << std::endl;
-    is.close();
-    exit(-1);    
-  }
-  char a,b,c,d;
-  is >> a >> b >> c >> d;
-  MatrixXd* M = new MatrixXd(N+1,2*(N+1));
-  for (int i = 0; i <= N ; i++)
-    is >> M[0](i,0) >> a >> M[0](i,1) >> b >> c;
-  is.close();
-  return *M;
-}
-
-MatrixXd& to_Matrix(double& time, Vector4d u0, const double dt, const double mu, int N, int type){
-   if (type == 4){
-    Vector4d v = RK_method(time,u0,dt,mu,N);
-    std::ifstream is;
-    std::string ss = "RK_" + std::to_string(N) + ".m";
-    const char *s = ss.c_str();
-    is.open(s);
-    char a,b,c,d;
-    is >> a >> b >> c >> d;
-    MatrixXd* M = new MatrixXd(N+1,2*(N+1));
-    for (int i = 0; i <= N ; i++)
-      is >> M[0](i,0) >> a >> M[0](i,1) >> b >> c;
-    is.close();
-    return *M;
-  }
-  else{
-    std::cerr << "No matching type!" << std::endl;
-    exit(-1);
-  }
-  
-}
-
 Vector2d extrapolate(const Vector2d u1, const Vector2d u2, int j){
   double tmp = pow(4,j);
   Vector2d v;
@@ -544,18 +481,21 @@ double err_richardson(double tol, double& time, Vector4d u0, double dt, const do
   }
 }
 
-double grid_refine_err1(Vector4d u0, double dt, const double mu, const int _acc, const double T, const Info_Table& table, int type){
+std::pair<double,double> grid_refine_err1(Vector4d u0, double dt, const double mu, const int _acc, const double T, const Info_Table& table, int type){
   const int N = 4;
-  std::string ss;
+  std::string ss,Method;
   switch (type){
   case 1:
     ss = "AB_" + std::to_string(_acc) + "_Init1_analysis.m";
+    Method = "Adams Bashforth";
     break;
   case 2:
     ss = "AM_" + std::to_string(_acc) + "_Init1_analysis.m";
+    Method = "Adams Moulton";
     break;
   case 3:
     ss = "BDF_" + std::to_string(_acc) + "_Init1_analysis.m";
+    Method = "BDFs";
     break;
   default:
     std::cerr << "No matching type!" << std::endl;
@@ -578,18 +518,28 @@ double grid_refine_err1(Vector4d u0, double dt, const double mu, const int _acc,
   os << "steps = x(:,2);\n";
   os << "CPU_time = x(:,3);\n";
   os << "err = x(:,4);\n";
-  //plot
-  os.close();
-  double mult = 1;
-  /*for (int i = 0; i < N - 1 ; i++){
-    double cr = err[i]/pow(err[i+1],_acc);
-    mult *= cr;
+  double cr = 1,constant = 1;
+  const double l2 = log(2);
+  for (int i = 0; i < N - 1 ; i++){
+    double mult = log(err[i]/err[i+1])/l2;
+    cr *= mult;
   }
-  return pow(mult,1.0/(N - 1));*/
-  return -1;
+  cr = pow(cr,1.0/(N - 1));
+  for (int i = N - 1; i >= 0 ; i--){
+    dt = 2 * dt;
+    double mult = err[i]/pow(dt,cr);
+    constant *= mult;
+  }
+  constant = pow(constant,1.0/N);
+  os << "cr=" << cr << ";\n";
+  os << "plot(dt.^cr,err,'b-*');xlabel(strcat('dt^p,p=',num2str(cr)));ylabel('err');"
+     << "title('" << Method << ",p = " << _acc << "');\n";
+  os.close();
+  std::pair<double,double> res(cr,constant);
+  return res;
 }
 
-double grid_refine_err1(Vector4d u0, double dt, const double mu, const double T, int type){
+std::pair<double,double> grid_refine_err1(Vector4d u0, double dt, const double mu, const double T, int type){
   const int N = 4;
   std::string ss = "RK_Init1_analysis.m";
   std::ofstream os;
@@ -609,31 +559,44 @@ double grid_refine_err1(Vector4d u0, double dt, const double mu, const double T,
   os << "steps = x(:,2);\n";
   os << "CPU_time = x(:,3);\n";
   os << "err = x(:,4);\n";
-  //plot
-  os.close();
-  /*double mult = 1;
+  double cr = 1,constant = 1;
+  const double l2 = log(2);
   for (int i = 0; i < N - 1 ; i++){
-    double cr = err[i]/pow(err[i+1],_acc);
-    mult *= cr;
+    double mult = log(err[i]/err[i+1])/l2;
+    cr *= mult;
   }
-  return pow(mult,1.0/(N - 1));*/
-  return -1;
+  cr = pow(cr,1.0/(N - 1));
+  for (int i = N - 1; i >= 0 ; i--){
+    dt = 2 * dt;
+    double mult = err[i]/pow(dt,cr);
+    constant *= mult;
+  }
+  constant = pow(constant,1.0/N);
+  os << "cr=" << cr << ";\n";
+  os << "plot(dt.^cr,err,'b-*');xlabel(strcat('dt^p,p=',num2str(cr)));ylabel('err');"
+      << "title('Runge Kutta');\n";
+  os.close();
+  std::pair<double,double> res(cr,constant);
+  return res;
 }
 
 double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, const int _acc, int N,const Info_Table& table, int type){
   Vector4d (*pf)(double&,Vector4d,const double,const double,int,int,const Info_Table&);
-  std::string ss;
+  std::string ss,Method;
   switch(type){
   case 1:
     pf = AB_method;
+    Method = "Adams Bashforth";
     ss = "AB_" + std::to_string(_acc) + "_Init2_analysis.m";
     break;
   case 2:
     pf = AM_method;
+    Method = "Adams Moulton";
     ss = "AM_" + std::to_string(_acc) + "_Init2_analysis.m";
     break;
   case 3:
     pf = BDF_method;
+    Method = "BDFs";
     ss = "BDF_" + std::to_string(_acc) + "_Init2_analysis.m";
     break;
   default:
@@ -676,7 +639,14 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, con
   os << "CPU_time = x(:,3);\n";
   os << "u = [" << v2(i-1)(0) << "," << v2(i-1)(1) << "];\n";
   os << "[err,index]=max(abs(x(:,4:5)-u),[],2);\n";
-  //plot
+  os << "len=length(err);\n";
+  os << "temp=err(2:end);temp(len)=0;\n";
+  os << "result=log2(err(1:len-1)./temp(1:len-1));\n";
+  os << "cr=geomean(result);\n";
+  os << "result2=err./(dt.^cr);\n";
+  os << "constant=geomean(result2);\n";
+  os << "plot(dt.^cr,err,'b-*');xlabel(strcat('dt^p,p=',num2str(cr),'  Constant=',num2str(constant)));ylabel('err');"
+     << "title('" << Method << ",p = " << _acc << "');\n";
   os.close();
   return max_norm(uu,v2(i-1));
 }
@@ -720,7 +690,14 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, int
     os << "CPU_time = x(:,3);\n";
     os << "u = [" << v2(i-1)(0) << "," << v2(i-1)(1) << "];\n";
     os << "[err,index]=max(abs(x(:,4:5)-u),[],2);\n";
-    //plot
+    os << "len=length(err);\n";
+    os << "temp=err(2:end);temp(len)=0;\n";
+    os << "result=log2(err(1:len-1)./temp(1:len-1));\n";
+    os << "cr=geomean(result);\n";
+    os << "result2=err./(dt.^cr);\n";
+    os << "constant=geomean(result2);\n";
+    os << "plot(dt.^cr,err,'b-*');xlabel(strcat('dt^p,p=',num2str(cr),'  Constant=',num2str(constant)));ylabel('err');"
+       << "title('Runge Kutta');\n";
     os.close();
     return max_norm(uu,v2(i-1));
   }

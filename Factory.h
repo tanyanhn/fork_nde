@@ -13,7 +13,7 @@ class TimeIntegrator{
   virtual Vector4d n_steps(double& time, Vector4d u0, const double dt, const double mu, int N) = 0;
   virtual double err_Initial(double& time, Vector4d u0, const double dt, const double mu, const double T) = 0;
   virtual double err_Richardson(double tol, double& time, Vector4d u0, double dt, const double mu, int N) = 0;
-  virtual double Grid_Refine1(Vector4d u0, double dt, const double mu, const double T) = 0;
+  virtual std::pair<double,double> Grid_Refine1(Vector4d u0, double dt, const double mu, const double T) = 0;
   virtual double Grid_Refine2(double tol,Vector4d u0, double dt, const double mu, int N) = 0;
 };
 
@@ -30,7 +30,7 @@ class Method: public CalPolicy, public TimeIntegrator{
   virtual Vector4d n_steps(double& time, Vector4d u0, const double dt, const double mu, int N);
   virtual double err_Initial(double& time, Vector4d u0, const double dt, const double mu, const double T);
   virtual double err_Richardson(double tol, double& time, Vector4d u0, double dt, const double mu, int N);
-  virtual double Grid_Refine1(Vector4d u0, double dt, const double mu, const double T);
+  virtual std::pair<double,double> Grid_Refine1(Vector4d u0, double dt, const double mu, const double T);
   virtual double Grid_Refine2(double tol,Vector4d u0, double dt, const double mu, int N);
 };
 

@@ -13,7 +13,7 @@ cleanm:
 	rm *.o
 	rm *.m
 	rm main
-run_test:
+run:
 	./main Inputdata/Input_test
 story: doc.tex
 	xelatex doc

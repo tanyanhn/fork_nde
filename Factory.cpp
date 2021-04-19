@@ -100,7 +100,7 @@ double Method<CalPolicy,acc>::err_Richardson(double tol, double& time, Vector4d 
 }
 
 template<class CalPolicy,int acc>
-double Method<CalPolicy,acc>::Grid_Refine1(Vector4d u0, double dt, const double mu, const double T){
+std::pair<double,double> Method<CalPolicy,acc>::Grid_Refine1(Vector4d u0, double dt, const double mu, const double T){
   switch(ITable->get_type()){
   case 1: case 2: case 3:
     return grid_refine_err1(u0,dt,mu,acc,T,*ITable,ITable->get_type());

@@ -6,6 +6,7 @@
 int main(int argc, char* argv[]){
   std::string garbage,Method,Initial,Inputdata;
   double dt,mu,T,time,result;
+  std::pair<double,double> results;
   Vector4d u0,v;
   int Index,Order,N;
   int err_analysis,grid_refine_analysis;
@@ -19,10 +20,11 @@ int main(int argc, char* argv[]){
     u0 = initial_load(Initial,mu,T);
     if ( Initial == "Initial1"){
       if ( grid_refine_analysis ){
-	result = pIntegrator->Grid_Refine1(u0,dt,mu,T);
+	results = pIntegrator->Grid_Refine1(u0,dt,mu,T);
 	std::cout << "Problem " << Index << ": "
-	  //
-		  << "Analysis can be saw by runing .m file" << std::endl; 
+	          << "Order = " << results.first
+	          << "  Error constant = " << results.second << std::endl
+		  << "Analysis can be saw by runing analysis.m file" << std::endl; 
       }
       else{
 	if ( err_analysis ){
@@ -44,8 +46,7 @@ int main(int argc, char* argv[]){
       if ( grid_refine_analysis ){
 	result = pIntegrator->Grid_Refine2(tol,u0,dt,mu,N);
 	std::cout << "Problem " << Index << ": "
-	  //
-		  << "Analysis can be saw by runing .m file" << std::endl; 
+		  << "Results and analysis can be saw by runing analysis.m file" << std::endl; 
       }
       else{
 	if ( err_analysis ){
