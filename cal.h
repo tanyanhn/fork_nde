@@ -6,6 +6,7 @@
 #include <ctime>
 #include <string>
 #include <iomanip>
+#include <algorithm>
 
 using namespace Eigen;
 
@@ -521,7 +522,7 @@ std::pair<double,double> grid_refine_err1(Vector4d u0, double dt, const double m
   double cr = 1,constant = 1;
   const double l2 = log(2);
   for (int i = 0; i < N - 1 ; i++){
-    double mult = log(err[i]/err[i+1])/l2;
+    double mult = std::max(1.0,log(err[i]/err[i+1])/l2);
     cr *= mult;
   }
   cr = pow(cr,1.0/(N - 1));
@@ -562,7 +563,7 @@ std::pair<double,double> grid_refine_err1(Vector4d u0, double dt, const double m
   double cr = 1,constant = 1;
   const double l2 = log(2);
   for (int i = 0; i < N - 1 ; i++){
-    double mult = log(err[i]/err[i+1])/l2;
+    double mult = std::max(1.0,log(err[i]/err[i+1])/l2);
     cr *= mult;
   }
   cr = pow(cr,1.0/(N - 1));
@@ -641,7 +642,7 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, con
   os << "[err,index]=max(abs(x(:,4:5)-u),[],2);\n";
   os << "len=length(err);\n";
   os << "temp=err(2:end);temp(len)=0;\n";
-  os << "result=log2(err(1:len-1)./temp(1:len-1));\n";
+  os << "result=max(1,log2(err(1:len-1)./temp(1:len-1)));\n";
   os << "cr=geomean(result);\n";
   os << "result2=err./(dt.^cr);\n";
   os << "constant=geomean(result2);\n";
@@ -692,7 +693,7 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, int
     os << "[err,index]=max(abs(x(:,4:5)-u),[],2);\n";
     os << "len=length(err);\n";
     os << "temp=err(2:end);temp(len)=0;\n";
-    os << "result=log2(err(1:len-1)./temp(1:len-1));\n";
+    os << "result=max(1,log2(err(1:len-1)./temp(1:len-1)));\n";
     os << "cr=geomean(result);\n";
     os << "result2=err./(dt.^cr);\n";
     os << "constant=geomean(result2);\n";
