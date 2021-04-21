@@ -1,7 +1,7 @@
-#include "Factory.cpp"
+#include "Factory.h"
 #include <iostream>
 
-#define tol 1e-8
+#define tol 1e-12
 
 int main(int argc, char* argv[]){
   std::string garbage,Method,Initial,Inputdata;

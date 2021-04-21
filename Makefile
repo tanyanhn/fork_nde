@@ -4,8 +4,8 @@ Info.o: Info.h Info.cpp
 	g++ -c Info.cpp 
 main.o: main.cpp 
 	g++ -c main.cpp  -std=c++11
-Factory.o: Factory.h Factory.cpp
-	g++ -c Factory.cpp -std=c++11
+Factory.o: Factory.h 
+	g++ -c Factory.h -std=c++11
 clean:
 	rm *.o
 	rm main

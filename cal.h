@@ -511,7 +511,7 @@ std::pair<double,double> grid_refine_err1(Vector4d u0, double dt, const double m
   for (int i = 0; i < N ; i++){
     err[i] = err_initial(time,u0,dt,mu,_acc,T,table,type);
     int step = round(T/dt);
-    os << dt << "," << step << "," << time << "," << std::setprecision(12) << err[i] << ";\n";
+    os << dt << "," << step << "," << time << "," << std::setprecision(16) << err[i] << ";\n";
     dt = 0.5 * dt;
   }
   os << "];\n";
@@ -552,7 +552,7 @@ std::pair<double,double> grid_refine_err1(Vector4d u0, double dt, const double m
   for (int i = 0; i < N ; i++){
     err[i] = err_initial(time,u0,dt,mu,T,4);
     int step = round(T/dt);
-    os << dt << "," << step << "," << time << "," << std::setprecision(12) << err[i] << ";\n";
+    os << dt << "," << step << "," << time << "," << std::setprecision(16) << err[i] << ";\n";
     dt = 0.5 * dt;
   }
   os << "];\n";
@@ -614,7 +614,7 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, con
   typedef Matrix<Vector2d,Dynamic,1> VectorXv;
   VectorXv v1(1),v2(1);
   Vector4d u = pf(time,u0,dt,mu,_acc,N,table);
-  os << dt << "," << N << "," << time << "," << std::setprecision(12) << u[0] << "," << std::setprecision(12) << u[1] << ";\n";
+  os << dt << "," << N << "," << time << "," << std::setprecision(16) << u[0] << "," << std::setprecision(16) << u[1] << ";\n";
   v1(0) << u(0),u(1);
   uu = v1(0);
   dt = 0.5*dt;
@@ -622,7 +622,7 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, con
   for ( i = 2; i < 10 ; i++){
     v2.resize(i,1);
     u = pf(time,u0,dt,mu,_acc,N,table);
-    os << dt << "," << N << "," << time << "," << std::setprecision(12) << u[0] << "," << std::setprecision(12) << u[1] << ";\n";
+    os << dt << "," << N << "," << time << "," << std::setprecision(16) << u[0] << "," << std::setprecision(16) << u[1] << ";\n";
     v2(0) << u(0),u(1);
     for (int j = 1 ; j < i ; j++)
       v2(j) = extrapolate(v2(j-1),v1(j-1),j);
@@ -665,7 +665,7 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, int
     Vector2d uu;
     VectorXv v1(1),v2(1);
     Vector4d u = RK_method(time,u0,dt,mu,N);
-    os << dt << "," << N << "," << time << "," << std::setprecision(12) << u[0] << "," << std::setprecision(12) << u[1] << ";\n";
+    os << dt << "," << N << "," << time << "," << std::setprecision(16) << u[0] << "," << std::setprecision(16) << u[1] << ";\n";
     v1(0) << u(0),u(1);
     uu = v1(0);
     dt = 0.5*dt;
@@ -673,7 +673,7 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, int
     for (i = 2; i < 10 ; i++){
       v2.resize(i,1);
       u = RK_method(time,u0,dt,mu,N);
-      os << dt << "," << N << "," << time << "," << std::setprecision(12) << u[0] << "," << std::setprecision(12) << u[1] << ";\n";
+      os << dt << "," << N << "," << time << "," << std::setprecision(16) << u[0] << "," << std::setprecision(16) << u[1] << ";\n";
       v2(0) << u(0),u(1);
       for (int j = 1 ; j < i ; j++)
 	v2(j) = extrapolate(v2(j-1),v1(j-1),j);
