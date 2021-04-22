@@ -431,7 +431,7 @@ double err_richardson(double tol, double& time, Vector4d u0,double dt, const dou
   uu = v1(0);
   dt = 0.5*dt;
   N = 2*N;
-  for ( i = 2; i < 10 ; i++){
+  for ( i = 2; i < 7 ; i++){
     v2.resize(i,1);
     u = pf1(u0,dt,mu,_acc,N,table);
     v2(0) << u(0),u(1);
@@ -460,7 +460,7 @@ double err_richardson(double tol, double& time, Vector4d u0, double dt, const do
     uu = v1(0);
     dt = 0.5*dt;
     N = 2*N;
-    for (i = 2; i < 10 ; i++){
+    for (i = 2; i < 7 ; i++){
       v2.resize(i,1);
       u = RK_method(u0,dt,mu,N);
       v2(0) << u(0),u(1);
@@ -621,7 +621,7 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, con
   uu = v1(0);
   dt = 0.5*dt;
   N = 2*N;
-  for ( i = 2; i < 10 ; i++){
+  for ( i = 2; i < 7 ; i++){
     v2.resize(i,1);
     u = pf(time,u0,dt,mu,_acc,N,table);
     if ( i < 5 ){
@@ -631,18 +631,18 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, con
     for (int j = 1 ; j < i ; j++)
       v2(j) = extrapolate(v2(j-1),v1(j-1),j);
     err = max_norm(v2(i-1),v1(i-2));
-    if (err < tol)
-      break;
     v1.resize(i,1);
     v1 = v2;
     dt = 0.5*dt;
     N = 2*N;
+    if (err < tol)
+      break;
   }
   os << "];\n";
   os << "dt = x(:,1);\n";
   os << "steps = x(:,2);\n";
   os << "CPU_time = x(:,3);\n";
-  os << "u = [" << v2(i-1)(0) << "," << v2(i-1)(1) << "];\n";
+  os << "u = [" << v2(i-2)(0) << "," << v2(i-2)(1) << "];\n";
   os << "[err,index]=max(abs(x(:,4:5)-u),[],2);\n";
   os << "len=length(err);\n";
   os << "temp=err(2:end);temp(len)=0;\n";
@@ -653,7 +653,7 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, con
   os << "plot(dt.^cr,err,'b-*');xlabel(strcat('dt^p,p=',num2str(cr),'  Constant=',num2str(constant)));ylabel('err');"
      << "title('" << Method << ",p = " << _acc << "');\n";
   os.close();
-  return max_norm(uu,v2(i-1));
+  return max_norm(uu,v2(i-2));
 }
 
 double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, int N, int type){
@@ -674,7 +674,7 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, int
     uu = v1(0);
     dt = 0.5*dt;
     N = 2*N;
-    for (i = 2; i < 10 ; i++){
+    for (i = 2; i < 7 ; i++){
       v2.resize(i,1);
       u = RK_method(time,u0,dt,mu,N);
       if (i < 5){
