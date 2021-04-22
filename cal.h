@@ -167,7 +167,7 @@ Vector4d AB_method(Vector4d u0, const double dt, const double mu, int _acc, int 
   u[0] = u0;
   int k = 1;
   while (k < _acc){
-    Vector4d v = AB_one_step(u,dt,mu,k,table);
+    Vector4d v = RK_one_step(u[k-1],dt,mu);
     u[k] = v;
     k++;
   }
@@ -221,7 +221,7 @@ Vector4d AM_method(Vector4d u0, const double dt, const double mu, int _acc, int 
   u[0] = u0;
   int k = 1;
   while (k < _acc - 1){
-    Vector4d v = AM_one_step(u,dt,mu,k+1,table);
+    Vector4d v = RK_one_step(u[k-1],dt,mu);
     u[k] = v;
     k++;
   }
@@ -277,7 +277,7 @@ Vector4d BDF_method(Vector4d u0, const double dt, const double mu, int _acc, int
   u[0] = u0;
   int k = 1;
   while (k < _acc){
-    Vector4d v = BDF_one_step(u,dt,mu,k,table);
+    Vector4d v = RK_one_step(u[k-1],dt,mu);
     u[k] = v;
     k++;
   }
@@ -358,17 +358,17 @@ double err_initial(double& time, Vector4d u0, const double dt, const double mu, 
   switch(type){
   case 1:
     v = AB_method(time,u0,dt,mu,_acc,N,table);
-    v1 = v + rt * f(v,mu);
+    v1 = RK_one_step(v,rt,mu);
     err = max_norm(u0,v1);
     return err;
   case 2:
     v = AM_method(time,u0,dt,mu,_acc,N,table);
-    v1 = v + rt * f(v,mu);
+    v1 = RK_one_step(v,rt,mu);
     err = max_norm(u0,v1);
     return err;
   case 3:
     v = BDF_method(time,u0,dt,mu,_acc,N,table);
-    v1 = v + rt * f(v,mu);
+    v1 = RK_one_step(v,rt,mu);
     err = max_norm(u0,v1);
     return err;
   default:
@@ -383,7 +383,7 @@ double err_initial(double& time, Vector4d u0, const double dt, const double mu, 
     double rt = T - N*dt;
     Vector4d v = RK_method(time,u0,dt,mu,N);
     Vector4d v1;
-    v1 = v + rt * f(v,mu);
+    v1 = RK_one_step(v,rt,mu);
     double err = max_norm(u0,v1);
     return err;
   }
@@ -483,7 +483,7 @@ double err_richardson(double tol, double& time, Vector4d u0, double dt, const do
 }
 
 std::pair<double,double> grid_refine_err1(Vector4d u0, double dt, const double mu, const int _acc, const double T, const Info_Table& table, int type){
-  const int N = 4;
+  int N = 4;
   std::string ss,Method;
   switch (type){
   case 1:
@@ -493,10 +493,12 @@ std::pair<double,double> grid_refine_err1(Vector4d u0, double dt, const double m
   case 2:
     ss = "AM_" + std::to_string(_acc) + "_Init1_analysis.m";
     Method = "Adams Moulton";
+    N--;
     break;
   case 3:
     ss = "BDF_" + std::to_string(_acc) + "_Init1_analysis.m";
     Method = "BDFs";
+    N--;
     break;
   default:
     std::cerr << "No matching type!" << std::endl;
@@ -622,7 +624,9 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, con
   for ( i = 2; i < 10 ; i++){
     v2.resize(i,1);
     u = pf(time,u0,dt,mu,_acc,N,table);
+    if ( i < 5 ){
     os << dt << "," << N << "," << time << "," << std::setprecision(16) << u[0] << "," << std::setprecision(16) << u[1] << ";\n";
+    }
     v2(0) << u(0),u(1);
     for (int j = 1 ; j < i ; j++)
       v2(j) = extrapolate(v2(j-1),v1(j-1),j);
@@ -673,7 +677,9 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, int
     for (i = 2; i < 10 ; i++){
       v2.resize(i,1);
       u = RK_method(time,u0,dt,mu,N);
+      if (i < 5){
       os << dt << "," << N << "," << time << "," << std::setprecision(16) << u[0] << "," << std::setprecision(16) << u[1] << ";\n";
+      }
       v2(0) << u(0),u(1);
       for (int j = 1 ; j < i ; j++)
 	v2(j) = extrapolate(v2(j-1),v1(j-1),j);

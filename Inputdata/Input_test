@@ -1,2 +1,2 @@
-Index	Method		Order	dt	Initial		N	err_analysis	grid_refine_analysis
-1	Adams_Moulton		4	0.0005	Initial1	2000	1		1
+Index	Method			Order	dt	Initial		N	err_analysis	grid_refine_analysis
+1	Adams_Moulton		4	0.0002	Initial2	20000	1		1
