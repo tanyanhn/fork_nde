@@ -15,6 +15,10 @@ cleanm:
 	rm main
 run:
 	./main Inputdata/Input_test
+test1:
+	./main Inputdata/test1
+	matlab -nodesktop -nosplash -r AB_1_24000
+	matlab -nodesktop -nosplash -r RK_6000
 story: doc.tex
 	xelatex doc
 	xelatex doc

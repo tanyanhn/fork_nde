@@ -187,9 +187,10 @@ Vector4d AB_method(Vector4d u0, const double dt, const double mu, int _acc, int 
     os << v(0) << "," << v(1) << ";\n";
   }
   os << "];\n";
-  os << "x = a(:,1);";
-  os << "y = a(:,2);";
-  os << "plot(x,y)";
+  os << "x = a(:,1);\n";
+  os << "y = a(:,2);\n";
+  os << "plot(x,y);";
+  os << "title('Adams Bashforth,p = " << _acc << ",dt = " << dt << ",N = " << N << "');\n";
   os.close();
   return u[_acc-1];
 }
@@ -241,9 +242,10 @@ Vector4d AM_method(Vector4d u0, const double dt, const double mu, int _acc, int 
     os << v(0) << "," << v(1) << ";\n";
   }
   os << "];\n";
-  os << "x = a(:,1);";
-  os << "y = a(:,2);";
-  os << "plot(x,y)";
+  os << "x = a(:,1);\n";
+  os << "y = a(:,2);\n";
+  os << "plot(x,y);";
+  os << "title('Adams Moulton,p = " << _acc << ",dt = " << dt << ",N = " << N << "');\n";
   os.close();
   return u[_acc-2];
 }
@@ -297,9 +299,10 @@ Vector4d BDF_method(Vector4d u0, const double dt, const double mu, int _acc, int
     os << v(0) << "," << v(1) << ";\n";
   }
   os << "];\n";
-  os << "x = a(:,1);";
-  os << "y = a(:,2);";
-  os << "plot(x,y)";
+  os << "x = a(:,1);\n";
+  os << "y = a(:,2);\n";
+  os << "plot(x,y);";
+  os << "title('BDFs,p = " << _acc << ",dt = " << dt << ",N = " << N << "');\n";
   os.close();
   return u[_acc-1];
 }
@@ -335,9 +338,10 @@ Vector4d RK_method(Vector4d u0, const double dt, const double mu, int N){
     os << u(0) << "," << u(1) << ";\n";
   }
   os << "];\n";
-  os << "x = a(:,1);";
-  os << "y = a(:,2);";
-  os << "plot(x,y)";
+  os << "x = a(:,1);\n";
+  os << "y = a(:,2);\n";
+  os << "plot(x,y);";
+  os << "title('Runge Kutta,dt = " << dt << ",N = " << N << "');\n";
   os.close();
   return u;
 }
