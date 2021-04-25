@@ -46,6 +46,10 @@ test24:
 	echo Use "make clean" to clean all .m file.
 test31:
 	./main Inputdata/test3_1
+	echo Use "make clean" to clean all .m file.
+test32:
+	./main Inputdata/test3_2
+	echo Use "make clean" to clean all .m file.
 story: doc.tex
 	xelatex doc
 	xelatex doc

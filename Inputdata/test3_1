@@ -1,2 +1,9 @@
 Index	Method			Order	dt		Initial		N	err_analysis	grid_refine_analysis
-1	Adams_Bashforth   	1	0.00001		Initial1	1706520	0		0
+1	Adams_Bashforth   	1	0.0003		Initial1	56884	0		0
+2	Adams_Bashforth   	1	0.0001		Initial1	170652	0		0
+3	Adams_Bashforth   	2	0.0005		Initial1	40000	0		0
+4	Adams_Bashforth   	2	0.0003		Initial1	56884	0		0
+5	Adams_Bashforth   	3	0.0018		Initial1	9500	0		0
+6	Adams_Bashforth   	3	0.001		Initial1	17065	0		0
+7	Adams_Bashforth   	4	0.0015		Initial1	12000	0		0
+8	Adams_Bashforth   	4	0.0012		Initial1	14221	0		0
