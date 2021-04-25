@@ -539,6 +539,13 @@ std::pair<double,double> grid_refine_err1(Vector4d u0, double dt, const double m
   }
   constant = pow(constant,1.0/N);
   os << "cr=" << cr << ";\n";
+  os << "subplot(1,3,1);\n";
+  os << "plot(dt,CPU_time,'r-*');xlabel('dt');ylabel('CPU time(ms)');"
+     << "title('" << Method << ",p = " << _acc << "');\n";
+  os << "subplot(1,3,2);\n";
+  os << "plot(dt,err,'m-*');xlabel('dt');ylabel('err');"
+     << "title('" << Method << ",p = " << _acc << "');\n";
+  os << "subplot(1,3,3);\n";
   os << "plot(dt.^cr,err,'b-*');xlabel(strcat('dt^p,p=',num2str(cr)));ylabel('err');"
      << "title('" << Method << ",p = " << _acc << "');\n";
   os.close();
@@ -580,8 +587,15 @@ std::pair<double,double> grid_refine_err1(Vector4d u0, double dt, const double m
   }
   constant = pow(constant,1.0/N);
   os << "cr=" << cr << ";\n";
+  os << "subplot(1,3,1);\n";
+  os << "plot(dt,CPU_time,'r-*');xlabel('dt');ylabel('CPU time(ms)');"
+     << "title('Runge Kutta');\n";
+  os << "subplot(1,3,2);\n";
+  os << "plot(dt,err,'m-*');xlabel('dt');ylabel('err');"
+     << "title('Runge Kutta');\n";
+  os << "subplot(1,3,3);\n";
   os << "plot(dt.^cr,err,'b-*');xlabel(strcat('dt^p,p=',num2str(cr)));ylabel('err');"
-      << "title('Runge Kutta');\n";
+     << "title('Runge Kutta');\n";
   os.close();
   std::pair<double,double> res(cr,constant);
   return res;
@@ -654,7 +668,14 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, con
   os << "cr=geomean(result);\n";
   os << "result2=err./(dt.^cr);\n";
   os << "constant=geomean(result2);\n";
-  os << "plot(dt.^cr,err,'b-*');xlabel(strcat('dt^p,p=',num2str(cr),'  Constant=',num2str(constant)));ylabel('err');"
+  os << "subplot(1,3,1);\n";
+  os << "plot(dt,CPU_time,'r-*');xlabel('dt');ylabel('CPU time(ms)');"
+     << "title('" << Method << ",p = " << _acc << "');\n";
+  os << "subplot(1,3,2);\n";
+  os << "plot(dt,err,'m-*');xlabel('dt');ylabel('err');"
+     << "title('" << Method << ",p = " << _acc << "');\n";
+  os << "subplot(1,3,3);\n";
+  os << "plot(dt.^cr,err,'b-*');xlabel(strcat('dt^p,p=',num2str(cr)));ylabel('err');"
      << "title('" << Method << ",p = " << _acc << "');\n";
   os.close();
   return max_norm(uu,v2(i-2));
@@ -707,7 +728,14 @@ double grid_refine_err2(double tol, Vector4d u0, double dt, const double mu, int
     os << "cr=geomean(result);\n";
     os << "result2=err./(dt.^cr);\n";
     os << "constant=geomean(result2);\n";
-    os << "plot(dt.^cr,err,'b-*');xlabel(strcat('dt^p,p=',num2str(cr),'  Constant=',num2str(constant)));ylabel('err');"
+    os << "subplot(1,3,1);\n";
+    os << "plot(dt,CPU_time,'r-*');xlabel('dt');ylabel('CPU time(ms)');"
+       << "title('Runge Kutta');\n";
+    os << "subplot(1,3,2);\n";
+    os << "plot(dt,err,'m-*');xlabel('dt');ylabel('err');"
+       << "title('Runge Kutta');\n";
+    os << "subplot(1,3,3);\n";
+    os << "plot(dt.^cr,err,'b-*');xlabel(strcat('dt^p,p=',num2str(cr)));ylabel('err');"
        << "title('Runge Kutta');\n";
     os.close();
     return max_norm(uu,v2(i-1));

@@ -19,6 +19,8 @@ test1:
 	./main Inputdata/test1
 	matlab -nodesktop -nosplash -r AB_1_24000
 	matlab -nodesktop -nosplash -r RK_6000
+test21:
+	./main Inputdata/test2_1
 story: doc.tex
 	xelatex doc
 	xelatex doc
