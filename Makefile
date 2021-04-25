@@ -43,7 +43,9 @@ test24:
 	./main Inputdata/test2_4
 	matlab -nodesktop -nosplash -r RK_Init1_analysis
 	matlab -nodesktop -nosplash -r RK_Init2_analysis
-	echo Use "make clean" to clean all .m file. 
+	echo Use "make clean" to clean all .m file.
+test31:
+	./main Inputdata/test3_1
 story: doc.tex
 	xelatex doc
 	xelatex doc
