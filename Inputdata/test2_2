@@ -1,3 +1,3 @@
 Index	Method			Order	dt		Initial		N	err_analysis	grid_refine_analysis
 1	Adams_Moulton   	3	0.0004		Initial2	30000	0		1
-2	Adams_Moulton		5	0.0004		Initial1	30000	0		1
+2	Adams_Moulton		5	0.0004		Initial1	0	0		1
