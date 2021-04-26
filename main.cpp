@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
       else{
 	if ( err_analysis ){
 	  result = pIntegrator->err_Initial(time,u0,dt,mu,T);
-	  std::cout << "Problem " << Index << ": "
+	  std::cout << "Problem " << Index << ": " << Method << " , " << "order = " << Order << std::endl
 		    << "err: " << result << ",CPU time: " << time << "(ms)" << std::endl
 		    << "        orbit can be saw by runing .m file" << std::endl;
 	}
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]){
       else{
 	if ( err_analysis ){
 	  result = pIntegrator->err_Richardson(tol,time,u0,dt,mu,N);
-	  std::cout << "Problem " << Index << ": "
+	  std::cout << "Problem " << Index << ": " << Method << " , " << "order = " << Order << std::endl
 		    << "err: " << result << ",CPU time: " << time << "(ms)" << std::endl
 		    << "        orbit can be saw by runing .m file" << std::endl;
 	}

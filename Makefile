@@ -9,7 +9,8 @@ Factory.o: Factory.h
 clean:
 	rm *.m
 run:
-	./main Inputdata/Input_test
+	./main Inputdata/test
+	echo Use "make clean" to clean all .m file.
 test1:
 	./main Inputdata/test1
 	matlab -nodesktop -nosplash -r AB_1_24000
