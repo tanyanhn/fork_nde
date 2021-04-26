@@ -7,8 +7,6 @@ main.o: main.cpp
 Factory.o: Factory.h 
 	g++ -c Factory.h -std=c++11
 clean:
-	rm *.o
-	rm main
 	rm *.m
 run:
 	./main Inputdata/Input_test
@@ -50,9 +48,16 @@ test31:
 	./main Inputdata/test3_3
 	./main Inputdata/test3_4
 	echo Use "make clean" to clean all .m file.
+test32:
+	./main Inputdata/test3_5
+	echo Use "make clean" to clean all .m file.
 story: doc.tex
 	xelatex doc
 	xelatex doc
+cleanc:
+	rm *.o
+	rm main
+	rm *.m
 cleanr:
 	rm *.pdf
 	rm *.aux
