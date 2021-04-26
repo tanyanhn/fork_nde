@@ -9,8 +9,35 @@ Factory.o: Factory.h
 clean:
 	rm *.m
 run:
-	./main Inputdata/test
-	echo Use "make clean" to clean all .m file.
+	make test1
+	./main Inputdata/test_all_1
+	matlab -nodesktop -nosplash -r AB_2_Init1_analysis
+	./main Inputdata/test_all_2
+	matlab -nodesktop -nosplash -r AB_3_Init2_analysis
+	./main Inputdata/test_all_3
+	matlab -nodesktop -nosplash -r AM_3_Init2_analysis
+	./main Inputdata/test_all_4
+	matlab -nodesktop -nosplash -r BDF_3_Init2_analysis
+	./main Inputdata/test_all_5
+	matlab -nodesktop -nosplash -r RK_Init1_analysis
+	./main Inputdata/test_all_6
+	matlab -nodesktop -nosplash -r AB_4_21331
+	./main Inputdata/test_all_7
+	matlab -nodesktop -nosplash -r AB_2_3828
+	./main Inputdata/test_all_8
+	matlab -nodesktop -nosplash -r AM_4_8532
+	./main Inputdata/test_all_9
+	matlab -nodesktop -nosplash -r AM_2_1914
+	./main Inputdata/test_all_10
+	matlab -nodesktop -nosplash -r BDF_2_170652
+	./main Inputdata/test_all_11
+	matlab -nodesktop -nosplash -r BDF_4_1914
+	./main Inputdata/test_all_12
+	matlab -nodesktop -nosplash -r RK_11376
+	./main Inputdata/test_all_13
+	matlab -nodesktop -nosplash -r RK_479
+	./main Inputdata/test_all_14
+	echo All tests have done. Use "make clean" to clean all .m file.
 test1:
 	./main Inputdata/test1
 	matlab -nodesktop -nosplash -r AB_1_24000
