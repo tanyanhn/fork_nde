@@ -51,9 +51,14 @@ test31:
 test32:
 	./main Inputdata/test3_5
 	echo Use "make clean" to clean all .m file.
+test4:
+	./main Inputdata/test4
+	echo Use "make clean" to clean all .m file.
 story: doc.tex
+	make
 	xelatex doc
 	xelatex doc
+	echo You can read report by opening doc.pdf, and run tests by using command "make run".Exit matlab to get the next plot.
 cleanc:
 	rm *.o
 	rm main

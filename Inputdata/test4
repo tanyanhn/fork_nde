@@ -1,0 +1,13 @@
+Index	Method			Order	dt		Initial		N	err_analysis	grid_refine_analysis
+1	Adams_Bashforth	 	1	0.00000013	Initial1	0	1		0
+2	Adams_Bashforth	 	2	0.000016	Initial1	0	1		0
+3	Adams_Bashforth	 	3	0.00013		Initial1	0	1		0
+4	Adams_Bashforth	 	4	0.000153	Initial1	0	1		0
+5	Adams_Moulton	 	2	0.000035	Initial1	0	1		0
+6	Adams_Moulton	 	3	0.00031		Initial1	0	1		0
+7	Adams_Moulton	 	4	0.0003		Initial1	0	1		0
+8	Adams_Moulton	 	5	0.00046	 	Initial1	0	1		0
+9	BDFs		 	2	0.000018	Initial1	0	1		0
+10	BDFs		 	3	0.00018 	Initial1	0	1		0
+11	BDFs		 	4	0.00018		Initial1	0	1		0
+12 	Runge_Kutta		0	0.00069		Initial1	0	1		0
