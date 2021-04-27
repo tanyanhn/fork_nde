@@ -1,3 +1,13 @@
+/**
+ * @file   Info.h
+ * @author Lizhiqi <3180103041@zju.edu.cn>
+ * @date   Tue Apr 27 13:53:48 2021
+ * 
+ * @brief  Data structure for formula of
+ * linear multistep methods
+ * 
+ */
+
 #ifndef __MGGS_INFO__
 #define __MGGS_INFO__
 #include <iostream>

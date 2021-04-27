@@ -1,3 +1,15 @@
+/**
+ * @file   cal.h
+ * @author Lizhiqi <3180103041@zju.edu.cn>
+ * @date   Tue Apr 27 14:01:59 2021
+ * 
+ * @brief  Major calculation for different methods. 
+ * 
+ * 
+ */
+
+
+
 #ifndef __MGGS_CAL__
 #define __MGGS_CAL__
 #include "Info.h"

@@ -1,3 +1,13 @@
+/**
+ * @file   Factory.h
+ * @author Lizhiqi <3180103041@zju.edu.cn>
+ * @date   Tue Apr 27 14:07:11 2021
+ * 
+ * @brief  A realization of factory pattern,
+ * which allows main function to use input file
+ * to generate an object of the class TimeIntegrator.
+ */
+
 #ifndef __MGGS_FACTORY__
 #define __MGGS_FACTORY__
 #include <map>
