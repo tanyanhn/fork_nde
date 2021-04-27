@@ -4,6 +4,7 @@
 \usepackage[justification=centering]{caption}
 \usepackage{subfigure}  
 \usepackage{multirow}
+\usepackage{balance}
 \lstset{language=Matlab}
 \lstset{breaklines}
 \lstset{extendedchars=false}
@@ -29,11 +30,14 @@
 \setlength{\oddsidemargin}{-0cm}
 \setlength{\evensidemargin}{-0cm}
 
+\setlength\columnsep{12pt}
+\setlength\columnseprule{0.4pt}
+
 \setlength{\parskip}{1mm}
 \setlength{\unitlength}{1mm}
 \setlength{\parindent}{2em}
 
-\title{Project 1}
+\title{Numerical Solutions of Differential Equations - Project1}
 
 \author{Li Zhiqi\quad3180103041}
 
@@ -74,9 +78,127 @@ For each initial problem, we will use the following methods to solve it:\\\\
 And for each method and initial condition, we're supposed to use a stable time-step to compute the problem to period $T$. Furthermore, by some ways (Periodicity for initial1, and Richardson extrapolation for initial2) we can compute the errors of the problems, and perform a sequence of grid refinement test to analyze the convergence of each method. Finally, we will compare different methods with their total CPU time achieving an error of $10^{-3}$ based on the max-norm of the solution error.
 \newpage
 \section{Mathematical theory}
+\subsection{Linear multistep methods}
+For IVP
+$$\left\{\begin{aligned} \mathbf{u}(0) &=\mathbf{u}_{0} \\ \mathbf{u}^{\prime}(t) &=\mathbf{f}(\mathbf{u}(t), t), \quad \forall t \in[0, T] \end{aligned}\right.$$
+an s-step linear multistep method (LMM) has the form
+$$
+\sum_{j=0}^{s} \alpha_{j} \mathbf{U}^{n+j}=k \sum_{j=0}^{s} \beta_{j} \mathbf{f}\left(\mathbf{U}^{n+j}, t_{n+j}\right),
+$$
+where $\alpha_s=1$.\\
+More specifically, An \textbf{Adams formula} is an LMM of the form
+$$
+\mathbf{U}^{n+s}=\mathbf{U}^{n+s-1}+k \sum_{j=0}^{s} \beta_{j} \mathbf{f}\left(\mathbf{U}^{n+j}, t_{n+j}\right),
+$$
+while \textbf{Adams-Bashforth} formula satisfies $\beta_s=0$, and \textbf{Adams-Moulton} formula not.\\
+A \textbf{backward differentiation formula(BDF)} is an LMM of the form
+$$
+\sum_{j=0}^{s} \alpha_{j} \mathbf{U}^{n+j}=k \beta_{s} \mathbf{f}\left(\mathbf{U}^{n+s}, t_{n+s}\right).
+$$
+The coefficients of above formulas can be obtained by checking table.\\
+At last, an LMM has order of accuracy $p$ if
+$$
+\forall \mathbf{u} \in \mathcal{C}^{p+1}, \quad \mathcal{L} \mathbf{u}\left(t_{n}\right)=\Theta\left(k^{p+1}\right) \text { as } k \rightarrow 0,
+$$
+where the one-step error of the LMM $\mathcal{L}\mathbf{u}\left(t_{n}\right)$ is
+$$
+\mathcal{L} \mathbf{u}\left(t_{n}\right)=C_{0} \mathbf{u}\left(t_{n}\right)+C_{1} k \mathbf{u}_{t}\left(t_{n}\right)+C_{2} k^{2} \mathbf{u}_{t t}\left(t_{n}\right)+\cdots
+$$
+In other words, if an LMM has order of accuracy $p$, then we have $C_0 = C_1 = 
+\cdots = C_p = 0$ and $C_{p+1} \ne 0$. $C_{p+1}$ is called the error constant.
+\subsection{Classical Runge-Kutta method}
+The classical fourth-order Runge-Kutta method is a one-step method of the form
+$$
+\left\{\begin{array}{l}
+y_{1}=f\left(U^{n}, t_{n}\right) \\
+y_{2}=f\left(U^{n}+\frac{k}{2} y_{1}, t_{n}+\frac{k}{2}\right) \\
+y_{3}=f\left(U^{n}+\frac{k}{2} y_{2}, t_{n}+\frac{k}{2}\right) \\
+y_{4}=f\left(U^{n}+k y_{3}, t_{n}+k\right) \\
+U^{n+1}=U^{n}+\frac{k}{6}\left(y_{1}+2 y_{2}+2 y_{3}+y_{4}\right)
+\end{array}\right.
+$$
+The classical Runge-Kutta method is convergent with order of
+accuracy four, which means it's convergent and its one-step error satisfies
+$$
+\mathcal{L} u\left(t_{n}\right)=O\left(k^{5}\right),
+$$
+where the one-step error of multistage method is
+$$
+\mathcal{L} u\left(t_{n}\right):=u\left(t_{n+1}\right)-u\left(t_{n}\right)-k \Phi\left(u\left(t_{n}\right), t_{n} ; k\right) .
+$$
+And $\Phi\left(u\left(t_{n}\right), t_{n} ; k\right)=\frac{1}{6}\left(y_{1}+2 y_{2}+2 y_{3}+y_{4}\right)$.
+\subsection{Calculation of convergence order }
+Assume that we know the true solution(corresponds to case Initial1).Let $E(h)$ denote the error in the calculation with time-step size $h$, then
+$$
+E(h)=\|U(h)-U_0\|_{\infty }
+$$
+where $U(h)$ is the numerical solution vector with time-step $h$ and $U_0$ is the true solution.\\
+If the method is $p$th order accurate, then we expect
+$$
+E(h)=C h^{p}+o\left(h^{p}\right) \quad \text { as } h \rightarrow 0,
+$$
+and if $h$ is sufficiently small, then
+$$
+E(h) \approx C h^{p}.
+$$
+If we refine the grid by a factor of 2, then we expect
+$$
+E(h / 2) \approx C(h / 2)^{p}.
+$$
+Hence
+$$
+E(h)\ /\ E(h / 2) \approx 2^{p},
+$$
+we get
+$$
+p \approx \log _{2}(E(h)\ /\ E(h / 2)).
+$$
+We can also estimate the error constant $C$ by
+$$
+C \approx E(h) / h^{p}
+$$
+once $p$ is known.\\\\
+If there's no way to get true solution(corresponds to case Initial2), the situation is a little more complicated. We will discuss it in next section.
+\newpage
+\subsection{Richardson extrapolation}
+Richardson Extrapolation is an idea which often be used to improve the results of a numerical method: from a method of order $O(h^p)$ to a method of order $O(h^{p+1})$.\\
+Suppose we have a method of order $O(h^p)$, i.e.
+$$
+U=U(h)+O\left(h^{p}\right),
+$$
+or rewrite it as
+$$
+U=U(h)+Ch^{p}+O\left(h^{p+1}\right)
+$$
+The idea of Richardson extrapolation is to take two different values of $h$, and eliminate the $C$ term. Suppose we use $h_1$ and $h_2$, where $h_1$ and $h_2$ are of a similar order but not too close together(so $1 /\left(h_{2}^{p}-h_{1}^{p}\right)=O\left(1 / h^{p}\right)$).
+Then
+$$
+\begin{array}{l}
+U=U(h_1)+Ch_1^{p}+O\left(h^{p+1}\right)\\
+U=U(h_2)+Ch_2^{p}+O\left(h^{p+1}\right).
+\end{array}
+$$
+To eliminate the $C$ term, multiply the first equation by $h_2^p$, the second by $h_1^p$ and subtract.
+$$
+\begin{aligned}
+\left(h_{2}^{p}-h_{1}^{p}\right) U &=h_{2}^{p} U\left(h_{1}\right)-h_{1}^{p} U\left(h_{2}\right)+O\left(h^{2 p+1}\right) \\
+U &=\frac{h_{2}^{p} U\left(h_{1}\right)-h_{1}^{p} U\left(h_{2}\right)}{h_{2}^{p}-h_{1}^{p}}+O\left(h^{p+1}\right).
+\end{aligned}
+$$
+The Richardson extrapolation value for $U$ is
+$$
+U_{R}=\frac{h_{2}^{p} U\left(h_{1}\right)-h_{1}^{p} U\left(h_{2}\right)}{h_{2}^{p}-h_{1}^{p}},
+$$
+and its error is $O(h^{p+1})$.\\
+Typically, we take $h_1 = h$ and $h_2 = h/2$. Then
+$$
+U_{R}=\frac{(h / 2)^{p} U(h)-h^{p} U(h / 2)}{(h / 2)^{p}-h^{p}}=\frac{2^{p} U(h / 2)-U(h)}{2^{p}-1}.
+$$
+\\
+Using this method many times, we get the much more accurate approximation $U_R^{(n)}$. Use $\|U(h_1)-U_R^{(n)}\|_{\infty }$ and $\|U(h_2)-U_R^{(n)}\|_{\infty }$as an indication of the error, then we can use the method in section 2.3 to calculate the order of convergence and error constant.
 \newpage
 \section{Calculation results}
-In my program, it is necessary to do calculations by writing a input file where the name, order, time-step and other information are given.The specific format is as follows:
+In the program, it is necessary to do calculations by writing a input file where the name, order, time-step and other information are given.The specific format is as follows:
 \begin{table}[!htp]
 	\centering
 	\begin{tabular}{|c|c|c|c|}
@@ -87,7 +209,7 @@ In my program, it is necessary to do calculations by writing a input file where 
 		\hline		
 		2 & Runge-Kutta & 0 & 0.0001   \\	
 		\hline \hline
-		Initial & N & err-analysis & grid-refine-analysis \\
+		Initial & N & err & grid-refine\\
 		\hline
 		Initial2 & 30000 & 1 & 1 \\
 		\hline
@@ -97,8 +219,8 @@ In my program, it is necessary to do calculations by writing a input file where 
 	\caption{Input format}
 	\label{tab:format}
 \end{table}\\
-In the above input format, err-analysis equals to 1 means the solution error will be calculated, otherwise it will only calculate the result; Grid-refine-analysis equals to 1 means the program will perform a sequence of grid refinement test to analyze the convergence of the method.By the way, for order of Runge-Kutta method, you must fill in 0 though it will never be used; If you choose Initial1 as initial condition and calculate the error in program, N will not be used for we calculate the solution error by periodicity.\\
-You can use the command \textbf{"make run"} to get some test results. Exit matlab to get the next picture.
+In the above input format, err equals to 1 means the solution error will be calculated, otherwise it will only calculate the result; Grid-refine equals to 1 means the program will perform a sequence of grid refinement test to analyze the convergence of the method.By the way, for order of Runge-Kutta method, you must fill in 0 though it will never be used; If you choose Initial1 as initial condition and calculate the error in program, N will not be used for we calculate the solution error by periodicity.\\
+You can use the command \textbf{"make run"} to get main results listed below. When running, exit matlab to get the next plot.
 
 %1.two plots of solution make test1
 \subsection{Two example plots of solution}
@@ -123,7 +245,7 @@ Firstly, we take Euler's method and classical Runge-Kutta as examples to show th
 	\caption{Input test1}
 	\label{tab:test1}
 \end{table}\\
-You can use the command \textbf{"make test1"} to get the result.Exit matlab to get the next picture.\\
+You can use the command \textbf{"make test1"} to get the result.\\
 Here are outputs and plots from the program:\\\\
 \emph{Problem 1: relust: (1.3888,1.89075,0),}\\
 \emph{CPU time: 76.468(ms)}\\
@@ -188,32 +310,32 @@ You can use the command \textbf{"make test21"} to get the result. Here are outpu
 \emph{Error constant = 8.61791e+04}\\
 \emph{Problem 4: Order = 4.00685}\\
 \emph{Error constant = 1.66229e+12}
-
+\onecolumn
 \begin{figure}[!htp]   
 	\centering
-	\includegraphics[width=14.2cm]{Pictures/2_1_1.eps}
+	\includegraphics[width=12cm]{Pictures/2_1_1.eps}
 	\caption{Adams-Bashforth,p=1}
 	\label{fig:AB1gf}
 \end{figure}
 \begin{figure}[!htp]   
 	\centering
-	\includegraphics[width=14.2cm]{Pictures/2_1_2.eps}
+	\includegraphics[width=12cm]{Pictures/2_1_2.eps}
 	\caption{Adams-Bashforth,p=2}
 	\label{fig:AB2gf}
 \end{figure}
 \begin{figure}[!htp]   
 	\centering
-	\includegraphics[width=14.2cm]{Pictures/2_1_3.eps}
+	\includegraphics[width=12cm]{Pictures/2_1_3.eps}
 	\caption{Adams-Bashforth,p=3}
 	\label{fig:AB3gf}
 \end{figure}
 \begin{figure}[!htp]   
 	\centering
-	\includegraphics[width=14.2cm]{Pictures/2_1_4.eps}
+	\includegraphics[width=12cm]{Pictures/2_1_4.eps}
 	\caption{Adams-Bashforth,p=4}
 	\label{fig:AB4gf}
 \end{figure}
-\clearpage
+\twocolumn 
 \noindent From above results, each method fits its order of convergence well, so we draw a conclusion that the program of Adams-Bashforth method is effective. 
 \subsubsection{Adams-Moulton methods analysis}
 As space is limited and to avoid meaningless repetition, we only consider cases $p$=3 and $p$=5, using Initial2 and Initial1  respectively. Other cases are similar. Here is input file:
@@ -245,13 +367,13 @@ Use the command \textbf{"make test22"} to get the result. Here are outputs and p
 
 \begin{figure}[!htp]   
 	\centering
-	\includegraphics[width=9cm]{Pictures/2_2_1.eps}
+	\includegraphics[width=8cm]{Pictures/2_2_1.eps}
 	\caption{Adams-Moulton,p=3}
 	\label{fig:AM3gf}
 \end{figure}
 \begin{figure}[!htp]   
 	\centering
-	\includegraphics[width=9cm]{Pictures/2_2_2.eps}
+	\includegraphics[width=8cm]{Pictures/2_2_2.eps}
 	\caption{Adams-Moulton,p=5}
 	\label{fig:AM5gf}
 \end{figure}
@@ -282,20 +404,20 @@ Use the command \textbf{"make test23"} to get the result. Here are outputs and p
 \emph{Problem 1:Order=1.04632}\\
 \emph{Error constant = 6084.69}\\
 \emph{Problem 2: Order = 2.73333}\\
-\emph{Error constant = 722.068}\\\\\\\\
+\emph{Error constant = 722.068}\\
 \begin{figure}[!htp]   
 	\centering
-	\includegraphics[width=9cm]{Pictures/2_3_1.eps}
+	\includegraphics[width=8cm]{Pictures/2_3_1.eps}
 	\caption{BDF,p=1}
 	\label{fig:BDF1gf}
 \end{figure}
-\newpage
 \begin{figure}[!htp]   
 	\centering
-	\includegraphics[width=9cm]{Pictures/2_3_2.eps}
+	\includegraphics[width=8cm]{Pictures/2_3_2.eps}
 	\caption{BDF,p=3}
 	\label{fig:BDF3gf}
 \end{figure}
+\newpage
 \noindent Similar to Adams-Moulton methods, We come to the conclusion that the program of BDFs is effective. 
 \subsubsection{Classical Runge-Kutta method analysis}
 Classical Runge-Kutta method is convergent with order of
@@ -327,17 +449,16 @@ Use the command \textbf{"make test24"} to get the result. Here are outputs and p
 \emph{Error constant = 7.57268e+03}
 \begin{figure}[!htp]   
 	\centering
-	\includegraphics[width=9cm]{Pictures/2_4_1.eps}
+	\includegraphics[width=8cm]{Pictures/2_4_1.eps}
 	\caption{Runge-Kutta,Initial1}
 	\label{fig:RK1gf}
 \end{figure}
-\newpage
 \begin{figure}[!htp]   
 	\centering
-	\includegraphics[width=9cm]{Pictures/2_4_2.eps}
+	\includegraphics[width=8cm]{Pictures/2_4_2.eps}
 	\caption{Runge-Kutta,Initial2}
 	\label{fig:RK2gf}
-\end{figure}
+\end{figure}\\
 \noindent There's no doubt that classical Runge-Kutta method performs much well and it's effective.
 %3.关键步长 每种方法取一个p make test3
 \subsection{Determination of key time-step size}
@@ -351,7 +472,6 @@ As reference, the plot of solution for Initial1 is as follows:\\
 	\label{fig:R1}
 \end{figure}\\
 \noindent The following is the determination of the key time-step size of each method. You can use the command \textbf{"make test31"} to get all the .m file, and run them to get following plots.
-\newpage
 \begin{figure}[!htp] 
 	\centering
 	\subfigure[p = 1, dt = 1e-05]{\includegraphics[width=1.5in]{Pictures/3_11.eps}}
@@ -362,7 +482,7 @@ As reference, the plot of solution for Initial1 is as follows:\\
 \begin{figure}[!htp] 
 	\centering
 	\subfigure[p = 3, dt = 4e-04]{\includegraphics[width=1.5in]{Pictures/3_13.eps}}
-	\subfigure[p = 4, dt = 8e-05]{\includegraphics[width=1.5in]{Pictures/3_14.eps}}
+	\subfigure[p = 4, dt = 8e-04]{\includegraphics[width=1.5in]{Pictures/3_14.eps}}
 	\caption{Adams-Bashforth,p = 3,4 }
 	\label{AB2ks}
 \end{figure}
@@ -477,7 +597,6 @@ Similarly, reference plot of solution for Initial2 is as follows:
 	\label{fig:R2}
 \end{figure}\\
 To avoid meaningless display of plots, we omit all figures and list all results in form of table. You can use the command \textbf{"make test32"} to get all the .m file, and run them to get corresponding plot.
-\newpage
 \begin{table}[!htp]
 	\centering
 	\begin{tabular}{|c|c|c|}
@@ -515,6 +634,7 @@ To avoid meaningless display of plots, we omit all figures and list all results 
 	\label{tab:test35}
 \end{table}
 %4.Winner 每种方法取最快的 make test4
+\newpage
 \subsection{Efficiency comparison of methods}
 In the last part, we discuss the efficiency of different methods. Specifically, we will compare the running time when achieving an error of $10^{-3}$ based on the max-norm of the solution error. Since we are comparing relative efficiency, initial consition has little impact on the comparison.We take Initial1 as initial condition in the comparison below.\\
 We take Euler's method as an example. The input file is as follows:
@@ -539,10 +659,11 @@ Run the program multiple times, we get:\\\\
 \emph{err: 0.00100116,CPU time: 358821(ms)}\\
 \emph{err: 0.00100116,CPU time: 352904(ms)}\\
 \emph{$\dots\dots$ }\\
-\newpage
-\noindent Take the average of CPU time as the final result, then the time we need to achieve required error for Euler's method is 428668 ms.\\
+\noindent Take the average of CPU time as the final result, then the time we need to achieve required error for Euler's method is 356672 ms.\\
 Similarly, for each method, We list results as follows. You can use the command \textbf{"make test4"} to get all the result\textbf{(will take much time)}. 
-\begin{table}[!htp]
+\newpage
+\onecolumn
+\begin{table}[!tp]
 	\centering
 	\begin{tabular}{|c|c|c|c|c|}
 		\hline
@@ -580,7 +701,12 @@ Similarly, for each method, We list results as follows. You can use the command 
 	\end{tabular}
 	\caption{comparison of methods}
 	\label{tab:test4}
-\end{table}\\
-Obviously the winner is the \textbf{classical Runge-Kutta method} in terms of total CPU time
-to achieve an error of $10^{-3}$ of the solution error.
+\end{table}
+\twocolumn
+\balance
+\noindent Obviously the winner is the \textbf{classical Runge-Kutta method} in terms of total CPU time to achieve an error of $10^{-3}$ of the solution error.
+\section{Brief summary}
+To end report, we make a brief summary of our work.\\
+In section 1 and section 2, we restate the problem to solve and discuss related math theory. In section 3, we specify the format of the input file, and display the numerical results of problem. Specifically, we show two examples in section 3.1, calculate the order of convergence to analyze effectiveness of each method in section 3.2, determine the time-step size that make the plot of solutions is visually indistinguishable from plot given in section 3.3,  compare CPU time when achieving required error for different methods in section 3.4, and come to the conclusion that the classical Runge-Kutta method is the winner.\\
+Tests confirm the effectiveness of the program, and the performance of  methods meets expectations.
 \end{document}

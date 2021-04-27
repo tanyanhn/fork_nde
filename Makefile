@@ -9,7 +9,9 @@ Factory.o: Factory.h
 clean:
 	rm *.m
 run:
+	echo Part 1, two example plots.
 	make test1
+	echo Part 2, analysis of convergence order and effectiveness.
 	./main Inputdata/test_all_1
 	matlab -nodesktop -nosplash -r AB_2_Init1_analysis
 	./main Inputdata/test_all_2
@@ -20,6 +22,7 @@ run:
 	matlab -nodesktop -nosplash -r BDF_3_Init2_analysis
 	./main Inputdata/test_all_5
 	matlab -nodesktop -nosplash -r RK_Init1_analysis
+	echo Part 3, determination of key time-step size.
 	./main Inputdata/test_all_6
 	matlab -nodesktop -nosplash -r AB_4_21331
 	./main Inputdata/test_all_7
@@ -36,6 +39,7 @@ run:
 	matlab -nodesktop -nosplash -r RK_11376
 	./main Inputdata/test_all_13
 	matlab -nodesktop -nosplash -r RK_479
+	echo Part 4, comparison of CPU time achieving 1e-03 error.
 	./main Inputdata/test_all_14
 	echo All tests have done. Use "make clean" to clean all .m file.
 test1:
