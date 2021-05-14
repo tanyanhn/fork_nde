@@ -31,18 +31,56 @@ public:
   }
 };
 
+class injection{
+public:
+  static double* action(double* _vec, int& n){
+    if ( n < 8 || n%2 != 0){
+      std::cerr << "No matching n!" << std::endl;
+      return NULL;
+    }
+    else{
+      double* vec = new double[n/2 - 1];
+      for (int i = 0; i < n/2 - 1 ; i++)
+	vec[i] = _vec[2*i+1];
+      n = n/2;
+      return vec;
+    }
+  }
+};
+
+
+
 class linear{
 public:
   static double* action(double* _vec, int& n){
     double* vec = new double[2*n - 1];
     vec[0] = 0.5*_vec[0];
-    vec[2*n-2] = 0.5*_vec[n-2];
     for (int i = 1; i < 2*n -2 ; i++){
       if (i%2 == 1)
 	vec[i] = _vec[(i-1)/2];
       else
 	vec[i] = 0.5*(_vec[i/2 - 1]+_vec[i/2]);
     }
+    vec[2*n-2] = 0.5*_vec[n-2];
+    n = n*2;
+    return vec;
+  }
+};
+
+class quadratic{
+public:
+  static double* action(double* _vec, int& n){
+    double* vec = new double[2*n - 1];
+    vec[0] = 1.5*_vec[0]-0.5*_vec[1];
+    for (int i = 1; i < 2*n -4 ; i++){
+      if (i%2 == 1)
+	vec[i] = _vec[(i-1)/2];
+      else
+	vec[i] = 0.125*(15*_vec[i/2 - 1]-10*_vec[i/2]+3*_vec[i/2 + 1]);
+    }
+    vec[2*n-2] = 1.5*_vec[n-2]-0.5*_vec[n-3];
+    vec[2*n-3] = _vec[n-2];
+    vec[2*n-4] = 0.125*(15*_vec[n-2]-10*_vec[n-3]+3*_vec[n-4]);
     n = n*2;
     return vec;
   }
