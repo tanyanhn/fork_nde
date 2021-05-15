@@ -1,7 +1,7 @@
 #include "Multigrid.h"
 
 int main(int argc, char* argv[]){
-  std::pair<double,double> boud(0,0);
+  std::pair<double,double> boud(1,exp(sin(1)));
   std::pair<int,double> crit(0,1e-8);
   int n = 8;
   double* init = new double[n-1];
@@ -15,8 +15,8 @@ int main(int argc, char* argv[]){
     std::cout << p[i] << std::endl;*/
   double* A = V.lefthand(n);
   double* f = V.righthand(n);
-  double weight = 1;
-  double* result = V.weighted_Jacobi(A,f,init,n,weight,1);
+  double weight = 2.0/3;
+  double* result = V.weighted_Jacobi(A,f,init,n,weight,1000);
   for (int i = 0 ; i < n - 1 ; i++)
     std::cout << result[i] << std::endl;
   return 0;

@@ -11,7 +11,7 @@ class function{
      double tmp1 = sin(_x);
      double tmp2 = cos(_x);
      double tmp3 = exp(tmp1);
-     return -tmp1*tmp3+tmp2*tmp2*tmp3;
+     return tmp1*tmp3-tmp2*tmp2*tmp3;
   }
 };
 
@@ -108,7 +108,6 @@ public:
   void test_interpolation(int &n);
   double* lefthand(int _n);
   double* righthand(int _n);
-  double* get_RD(double* _A, int _n);
   double* weighted_Jacobi(double* _A, double* _f, double* _init, int _n, double weight, int times);
   //double* V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
 };
@@ -206,21 +205,6 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::righthand(int _n){
   return f;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double* Multigrid<RestrictionPolicy,InterpolationPolicy>::get_RD(double* _A, int _n){
-  double* D = new double[(_n-1)*(_n-1)];
-  for (int i = 0 ; i < (_n-1)*(_n-1) ; i++)
-    D[i] = 0;
-  for (int i = 0 ; i < _n - 1 ; i++){
-    if ( _A[i*_n] != 0)
-      D[i*_n] = 1.0/_A[i*_n];
-    else{
-      std::cerr << "A has 0 diagonal element!" << std::endl;
-      return NULL;
-    }
-  }
-  return D;
-}
 
 template <class RestrictionPolicy, class InterpolationPolicy>
 double* Multigrid<RestrictionPolicy,InterpolationPolicy>::weighted_Jacobi(double* _A, double* _f, double* _init, int _n, double weight, int times)
@@ -236,19 +220,16 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::weighted_Jacobi(double
 	T[i*(_n-1)+j] = -tmp*_A[i*(_n-1)+j];
     }
   }
-  double* RD = this->get_RD(_A,_n);
   double* cc = new double[_n-1];
   for (int i = 0 ; i < _n-1 ; i++)
-    cc[i] = RD[i]*_f[i];
+    cc[i] = tmp*_f[i];
   double* c = new double[_n-1];
-  for (int i = 0 ; i < _n-1 ; i++)
-    c[i] = cc[i];
   double* result = _init;
   int count = 0; 
   while (count < times){
-    cblas_dsbmv(CblasRowMajor,CblasUpper,_n-1,3,1,_A,_n-1,result,1,weight,c,1);
-    result = c;
-    c = cc;
+    cblas_dgemv(CblasRowMajor,CblasNoTrans,_n-1,_n-1,1.0,T,_n-1,result,1,0,c,1);
+    for ( int i = 0 ; i < _n-1 ; i++)
+      result[i]=c[i]+ cc[i];
     count++;
   }
   return result;
