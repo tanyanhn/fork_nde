@@ -6,7 +6,7 @@
 
 class function{
  public:
-  double f(double _x){
+  double action(double _x){
      double tmp1 = sin(_x);
      double tmp2 = cos(_x);
      double tmp3 = exp(tmp1);
@@ -105,6 +105,9 @@ public:
   std::pair<int,double> get_criteria() const;
   void test_restriction(int &n);
   void test_interpolation(int &n);
+  double* lefthand(int _n);
+  double* righthand(int _n);
+  //double* V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
 };
 
 
@@ -168,11 +171,37 @@ void Multigrid<RestrictionPolicy,InterpolationPolicy>::test_interpolation(int &n
   initial = InterpolationPolicy().action(initial,n);
 }
 
+template <class RestrictionPolicy, class InterpolationPolicy>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy>::lefthand(int _n){
+  double h = 1.0/_n;
+  double tmp1 = -1/(h*h);
+  double tmp2 = -2*tmp1;
+  double* A = new double[(_n-1)*(_n-1)];
+  for (int i = 0 ; i < (_n-1)*(_n-1) ; i++)
+    A[i] = 0;
+  A[0] = tmp2;A[1] = tmp1;
+  for (int i = 1 ; i < _n - 2 ; i++){
+    A[i*_n-1] = tmp1;
+    A[i*_n] = tmp2;
+    A[i*_n+1] = tmp1;
+  }
+  A[(_n-1)*(_n-1)-2] = tmp1;
+  A[(_n-1)*(_n-1)-1] = tmp2;
+  return A;
+}
 
-
-
-
-
+template <class RestrictionPolicy, class InterpolationPolicy>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy>::righthand(int _n){
+  double h = 1.0/_n;
+  double tmp1 = boundary.first/(h*h);
+  double tmp2 = boundary.second/(h*h);
+  double* f = new double[_n-1];
+  f[0] = u->action(h)+tmp1;
+  for (int i = 1 ; i < _n-2 ; i++)
+    f[i] = u->action((i+1)*h);
+  f[_n-2] = u->action((_n-1)*h)+tmp2;
+  return f;
+}
 
 
 #else
