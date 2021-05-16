@@ -7,6 +7,10 @@
 
 class function{
  public:
+  double ref(double _x){
+    return exp(sin(_x));
+  }
+  
   double action(double _x){
      double tmp1 = sin(_x);
      double tmp2 = cos(_x);
@@ -14,10 +18,6 @@ class function{
      return tmp1*tmp3-tmp2*tmp2*tmp3;
   }
 };
-
-double solution1(double _x){
-  return exp(sin(_x));
-}
 
 class full_weighting{
 public:
@@ -115,9 +115,11 @@ public:
   double* weighted_Jacobi(double* _A, double* _f, double* _init, int _n, double weight, int times);
   double* residual(double* _A, double* _f, double* _u, int _n);
   double* _residual(double* _A, double* _f, double* _u, int _n);
-  double* ref_solution1(int _n);
+  double* ref_solution(int _n);
   double max_norm(double* _u, int _n);
   double* onestep_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
+  int n_iteration_V_cycle(int _n, int _t1, int _t2);
+  double* V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
 };
 
 
@@ -265,11 +267,11 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::_residual(double* _A, 
   
 
 template <class RestrictionPolicy, class InterpolationPolicy>
-double* Multigrid<RestrictionPolicy,InterpolationPolicy>::ref_solution1(int _n){
+double* Multigrid<RestrictionPolicy,InterpolationPolicy>::ref_solution(int _n){
   double h = 1.0/_n;
   double* solution = new double[_n-1];
   for (int i = 0 ; i < _n-1 ; i++)
-    solution[i] = solution1((i+1)*h);
+    solution[i] = u->ref((i+1)*h);
   return solution;
 }
 
@@ -298,6 +300,43 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::onestep_V_cycle(double
   return result;
 }
 
+template <class RestrictionPolicy, class InterpolationPolicy>
+int Multigrid<RestrictionPolicy,InterpolationPolicy>::n_iteration_V_cycle(int _n, int _t1, int _t2){
+  int max = 0;
+  while(_n >= 4){
+    max += _t1+_t2;
+    _n = _n/2;
+  }
+  return max;
+}
+
+template <class RestrictionPolicy, class InterpolationPolicy>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy>::V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2){
+  if (criteria.first == 0){
+    int MAX = (int)(criteria.second + 0.01);
+    int count = 0;
+    int n_iteration = this->n_iteration_V_cycle(_n,_t1,_t2);
+    while (count < MAX){
+      _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
+      count += n_iteration;
+    }
+    return _v;
+  }
+  else if (criteria.first == 1){
+    double tol = criteria.second;
+    double* ref_solution = this->ref_solution(_n);
+    double ref_norm = this ->max_norm(ref_solution,_n);
+    double err = ref_norm;
+    while (err/ref_norm > tol){
+      _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
+      double* err_vector = new double[_n];
+      for (int i = 0 ; i < _n-1 ; i++)
+	err_vector[i] = _v[i] - ref_solution[i];
+      err = this->max_norm(err_vector, _n);
+    }
+    return _v;
+  }
+}
 
 #else
 //do nothing
