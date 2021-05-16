@@ -120,6 +120,8 @@ public:
   double* onestep_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
   int n_iteration_V_cycle(int _n, int _t1, int _t2);
   double* V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
+  double* fm_cycle(int &_n, double* _f, int _t1, int _t2);
+  int n_iteration_fm_cycle(int _n, int _t1, int _t2);
 };
 
 
@@ -336,7 +338,41 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::V_cycle(double* _v, in
     }
     return _v;
   }
+  else{
+    std::cerr << "Wrong criteria!" << std::endl;
+    return NULL;
+  }
 }
+
+template <class RestrictionPolicy, class InterpolationPolicy>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy>::fm_cycle(int &_n, double* _f, int _t1, int _t2){
+  double* v;
+  if (_n > 4){
+    double* f2 = RestrictionPolicy().action(_f,_n);
+    double* v2 = this->fm_cycle(_n,f2,_t1,_t2);
+    v = InterpolationPolicy().action(v2,_n);
+  }
+  else{
+    v = new double[_n-1];
+    for (int i = 0 ; i < _n-1 ; i++)
+      v[i] = 0;
+  }
+  double* result = this->onestep_V_cycle(v,_n,_f,_t1,_t2);
+  return result;
+}
+
+
+template <class RestrictionPolicy, class InterpolationPolicy>
+int Multigrid<RestrictionPolicy,InterpolationPolicy>::n_iteration_fm_cycle(int _n, int _t1, int _t2){
+  int max = 0;
+  while(_n >= 4){
+    max += this->n_iteration_V_cycle(_n,_t1,_t2);
+    _n = _n/2;
+  }
+  return max;
+}
+
+
 
 #else
 //do nothing
