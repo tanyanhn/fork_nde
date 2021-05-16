@@ -15,6 +15,10 @@ class function{
   }
 };
 
+double solution1(double _x){
+  return exp(sin(_x));
+}
+
 class full_weighting{
 public:
   static double* action(double* _vec, int& n){
@@ -109,7 +113,11 @@ public:
   double* lefthand(int _n);
   double* righthand(int _n);
   double* weighted_Jacobi(double* _A, double* _f, double* _init, int _n, double weight, int times);
-  //double* V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
+  double* residual(double* _A, double* _f, double* _u, int _n);
+  double* _residual(double* _A, double* _f, double* _u, int _n);
+  double* ref_solution1(int _n);
+  double max_norm(double* _u, int _n);
+  double* onestep_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
 };
 
 
@@ -224,7 +232,9 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::weighted_Jacobi(double
   for (int i = 0 ; i < _n-1 ; i++)
     cc[i] = tmp*_f[i];
   double* c = new double[_n-1];
-  double* result = _init;
+  double* result = new double[_n-1];
+  for (int i = 0 ; i < _n-1 ; i++)
+    result[i] = _init[i];
   int count = 0; 
   while (count < times){
     cblas_dgemv(CblasRowMajor,CblasNoTrans,_n-1,_n-1,1.0,T,_n-1,result,1,0,c,1);
@@ -234,6 +244,60 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::weighted_Jacobi(double
   }
   return result;
 }
+
+template <class RestrictionPolicy, class InterpolationPolicy>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy>::residual(double* _A, double* _f, double* _u, int _n){
+  double* result = new double[_n-1];
+  cblas_dgemv(CblasRowMajor,CblasNoTrans,_n-1,_n-1,1.0,_A,_n-1,_u,1,0,result,1);
+  for (int i = 0 ; i < _n-1 ; i++)
+    result[i] -= _f[i];
+  return result;
+}
+
+template <class RestrictionPolicy, class InterpolationPolicy>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy>::_residual(double* _A, double* _f, double* _u, int _n){
+  double* result = new double[_n-1];
+  cblas_dgemv(CblasRowMajor,CblasNoTrans,_n-1,_n-1,-1.0,_A,_n-1,_u,1,0,result,1);
+  for (int i = 0 ; i < _n-1 ; i++)
+    result[i] += _f[i];
+  return result;
+}
+  
+
+template <class RestrictionPolicy, class InterpolationPolicy>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy>::ref_solution1(int _n){
+  double h = 1.0/_n;
+  double* solution = new double[_n-1];
+  for (int i = 0 ; i < _n-1 ; i++)
+    solution[i] = solution1((i+1)*h);
+  return solution;
+}
+
+template <class RestrictionPolicy, class InterpolationPolicy>
+double Multigrid<RestrictionPolicy,InterpolationPolicy>::max_norm(double* _u, int _n){
+  int index = (int)cblas_idamax(_n-1,_u,1);
+  return _u[index];
+}
+
+template <class RestrictionPolicy, class InterpolationPolicy>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy>::onestep_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2){
+  double weight = 2.0/3;
+  double* A = this->lefthand(_n);
+  double* v = weighted_Jacobi(A,_f,_v,_n,weight,_t1);
+  if (_n > 4){
+    double* f2 = RestrictionPolicy().action(this->_residual(A,_f,v,_n),_n);
+    double* _v2 = new double[_n-1];
+    for (int i = 0 ; i < _n-1 ; i++)
+      _v2[i] = 0;
+    double* v2 = this->onestep_V_cycle(_v2,_n,f2,_t1,_t2);
+    double* v2c = InterpolationPolicy().action(v2,_n);
+    for (int i = 0 ; i < _n-1 ; i++)
+      v[i] += v2c[i];
+  }
+  double* result = weighted_Jacobi(A,_f,v,_n,weight,_t2);
+  return result;
+}
+
 
 #else
 //do nothing
