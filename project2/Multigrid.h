@@ -8,10 +8,24 @@
 #include <map>
 #include "cblas.h"
 
-class function{
+class function1{
  public:
   double ref(double _x){
     return exp(sin(_x));
+  }
+  
+  double action(double _x){
+     double tmp1 = sin(_x);
+     double tmp2 = cos(_x);
+     double tmp3 = exp(tmp1);
+     return tmp1*tmp3-tmp2*tmp2*tmp3;
+  }
+};
+
+class function2{
+  public:
+  double ref(double _x){
+    return exp(sin(_x))+(1-exp(sin(1)))*_x-1;
   }
   
   double action(double _x){
@@ -94,10 +108,9 @@ public:
   }
 };
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-class Multigrid: public RestrictionPolicy, public InterpolationPolicy{
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+class Multigrid: public RestrictionPolicy, public InterpolationPolicy, public Function{
 private:
-  function* u;
   std::pair<double,double> boundary;
   double* initial;
   std::pair<int,double> criteria;
@@ -130,68 +143,65 @@ public:
 };
 
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-Multigrid<RestrictionPolicy,InterpolationPolicy>::Multigrid(){
-  u = new function;
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+  Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::Multigrid(){
   initial = NULL;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-Multigrid<RestrictionPolicy,InterpolationPolicy>::Multigrid(std::pair<double,double> _boundary, double* _initial, std::pair<int,double> _criteria){
-  u = new function;
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::Multigrid(std::pair<double,double> _boundary, double* _initial, std::pair<int,double> _criteria){
   boundary = _boundary;
   initial = _initial;
   criteria = _criteria;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-Multigrid<RestrictionPolicy,InterpolationPolicy>::~Multigrid(){
-  delete u;
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::~Multigrid(){
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-void Multigrid<RestrictionPolicy,InterpolationPolicy>::load_boundary(std::pair<double,double> _boundary){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+void Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::load_boundary(std::pair<double,double> _boundary){
   boundary = _boundary;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-std::pair<double,double> Multigrid<RestrictionPolicy,InterpolationPolicy>::get_boundary() const{
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+std::pair<double,double> Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::get_boundary() const{
   return boundary;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-void Multigrid<RestrictionPolicy,InterpolationPolicy>::load_initial(double* _initial){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+void Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::load_initial(double* _initial){
   initial = _initial;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double* Multigrid<RestrictionPolicy,InterpolationPolicy>::get_initial() const{
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::get_initial() const{
   return initial;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-void Multigrid<RestrictionPolicy,InterpolationPolicy>::load_criteria(std::pair<int,double> _criteria){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+void Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::load_criteria(std::pair<int,double> _criteria){
   criteria = _criteria;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-std::pair<int,double> Multigrid<RestrictionPolicy,InterpolationPolicy>::get_criteria() const{
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+std::pair<int,double> Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::get_criteria() const{
   return criteria;
 }
 
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-void Multigrid<RestrictionPolicy,InterpolationPolicy>::test_restriction(int &n){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+void Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::test_restriction(int &n){
   initial = RestrictionPolicy().action(initial,n);
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-void Multigrid<RestrictionPolicy,InterpolationPolicy>::test_interpolation(int &n){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+void Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::test_interpolation(int &n){
   initial = InterpolationPolicy().action(initial,n);
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double* Multigrid<RestrictionPolicy,InterpolationPolicy>::lefthand(int _n){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::lefthand(int _n){
   double h = 1.0/_n;
   double tmp1 = -1/(h*h);
   double tmp2 = -2*tmp1;
@@ -209,22 +219,22 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::lefthand(int _n){
   return A;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double* Multigrid<RestrictionPolicy,InterpolationPolicy>::righthand(int _n){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::righthand(int _n){
   double h = 1.0/_n;
   double tmp1 = boundary.first/(h*h);
   double tmp2 = boundary.second/(h*h);
   double* f = new double[_n-1];
-  f[0] = u->action(h)+tmp1;
+  f[0] = Function().action(h)+tmp1;
   for (int i = 1 ; i < _n-2 ; i++)
-    f[i] = u->action((i+1)*h);
-  f[_n-2] = u->action((_n-1)*h)+tmp2;
+    f[i] = Function().action((i+1)*h);
+  f[_n-2] = Function().action((_n-1)*h)+tmp2;
   return f;
 }
 
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double* Multigrid<RestrictionPolicy,InterpolationPolicy>::weighted_Jacobi(double* _A, double* _f, double* _init, int _n, double weight, int times)
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::weighted_Jacobi(double* _A, double* _f, double* _init, int _n, double weight, int times)
 {
   double h = 1.0/_n;
   double tmp = 0.5*weight*h*h;
@@ -255,8 +265,8 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::weighted_Jacobi(double
 }
 
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double* Multigrid<RestrictionPolicy,InterpolationPolicy>::residual(double* _A, double* _f, double* _u, int _n){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::residual(double* _A, double* _f, double* _u, int _n){
   double* result = new double[_n-1];
   cblas_dgemv(CblasRowMajor,CblasNoTrans,_n-1,_n-1,-1.0,_A,_n-1,_u,1,0,result,1);
   for (int i = 0 ; i < _n-1 ; i++)
@@ -265,30 +275,30 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::residual(double* _A, d
 }
   
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double* Multigrid<RestrictionPolicy,InterpolationPolicy>::ref_solution(int _n){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::ref_solution(int _n){
   double h = 1.0/_n;
   double* solution = new double[_n-1];
   for (int i = 0 ; i < _n-1 ; i++)
-    solution[i] = u->ref((i+1)*h);
+    solution[i] = Function().ref((i+1)*h);
   return solution;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double Multigrid<RestrictionPolicy,InterpolationPolicy>::max_norm(double* _u, int _n){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::max_norm(double* _u, int _n){
   int index = (int)cblas_idamax(_n-1,_u,1);
   return fabs(_u[index]);
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double Multigrid<RestrictionPolicy,InterpolationPolicy>::two_norm(double* _u, int _n){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::two_norm(double* _u, int _n){
   double result = cblas_dnrm2(_n-1,_u,1);
   return result;
 }
 
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double* Multigrid<RestrictionPolicy,InterpolationPolicy>::onestep_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::onestep_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2){
   double weight = 2.0/3;
   double* A = this->lefthand(_n);
   double* v = weighted_Jacobi(A,_f,_v,_n,weight,_t1);
@@ -306,8 +316,8 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::onestep_V_cycle(double
   return result;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-int Multigrid<RestrictionPolicy,InterpolationPolicy>::n_iteration_V_cycle(int _n, int _t1, int _t2){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+int Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::n_iteration_V_cycle(int _n, int _t1, int _t2){
   int max = 0;
   while(_n >= 4){
     max += _t1+_t2;
@@ -316,8 +326,8 @@ int Multigrid<RestrictionPolicy,InterpolationPolicy>::n_iteration_V_cycle(int _n
   return max;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double* Multigrid<RestrictionPolicy,InterpolationPolicy>::V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2){
   if (criteria.first == 0){
     int MAX = (int)(criteria.second + 0.01);
     int count = 0;
@@ -348,8 +358,8 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::V_cycle(double* _v, in
   }
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double* Multigrid<RestrictionPolicy,InterpolationPolicy>::fm_cycle(int &_n, double* _f, int _t1, int _t2){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::fm_cycle(int &_n, double* _f, int _t1, int _t2){
   double* v;
   if (_n > 4){
     double* f2 = RestrictionPolicy().action(_f,_n);
@@ -366,8 +376,8 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::fm_cycle(int &_n, doub
 }
 
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-int Multigrid<RestrictionPolicy,InterpolationPolicy>::n_iteration_fm_cycle(int _n, int _t1, int _t2){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+int Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::n_iteration_fm_cycle(int _n, int _t1, int _t2){
   int max = 0;
   while(_n >= 4){
     max += this->n_iteration_V_cycle(_n,_t1,_t2);
@@ -376,8 +386,8 @@ int Multigrid<RestrictionPolicy,InterpolationPolicy>::n_iteration_fm_cycle(int _
   return max;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double Multigrid<RestrictionPolicy,InterpolationPolicy>::analysis_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::analysis_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2){
   std::ofstream os;
   std::string ss = "V_cycle_" + std::to_string(_n) + ".m";
   const char *s = ss.c_str();
@@ -450,8 +460,8 @@ double Multigrid<RestrictionPolicy,InterpolationPolicy>::analysis_V_cycle(double
   }
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double Multigrid<RestrictionPolicy,InterpolationPolicy>::analysis_fm_cycle(int &_n, double* _f, int _t1, int _t2){
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::analysis_fm_cycle(int &_n, double* _f, int _t1, int _t2){
     double* result;
     result = this->fm_cycle(_n,_f,_t1,_t2);
     double* ref_solution = this->ref_solution(_n);
