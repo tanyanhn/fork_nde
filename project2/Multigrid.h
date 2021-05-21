@@ -126,6 +126,7 @@ public:
   double* fm_cycle(int &_n, double* _f, int _t1, int _t2);
   int n_iteration_fm_cycle(int _n, int _t1, int _t2);
   double analysis_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
+  double analysis_fm_cycle(int &_n, double* _f, int _t1, int _t2);
 };
 
 
@@ -447,6 +448,18 @@ double Multigrid<RestrictionPolicy,InterpolationPolicy>::analysis_V_cycle(double
     std::cerr << "Wrong criteria!" << std::endl;
     return 0;
   }
+}
+
+template <class RestrictionPolicy, class InterpolationPolicy>
+double Multigrid<RestrictionPolicy,InterpolationPolicy>::analysis_fm_cycle(int &_n, double* _f, int _t1, int _t2){
+    double* result;
+    result = this->fm_cycle(_n,_f,_t1,_t2);
+    double* ref_solution = this->ref_solution(_n);
+    double* err_vector = new double[_n-1];
+    for (int i = 0 ; i < _n-1 ; i++)
+      err_vector[i] = ref_solution[i] - result[i];
+    double err = this->max_norm(err_vector, _n);
+    return err;
 }
 
 
