@@ -5,7 +5,6 @@
 #include <fstream>
 #include <string>
 #include <cmath>
-#include <map>
 #include "cblas.h"
 
 class function1{
@@ -108,8 +107,35 @@ public:
   }
 };
 
+class Grid{
+  public:
+  Grid();
+  virtual void load_boundary(std::pair<double,double> _boundary) = 0;
+  virtual std::pair<double,double> get_boundary() const = 0;
+  virtual void load_initial(double* _initial) = 0;
+  virtual double* get_initial() const = 0;
+  virtual void load_criteria(std::pair<int,double> _criteria) = 0;
+  virtual std::pair<int,double> get_criteria() const = 0;
+  virtual double* lefthand(int _n) = 0;
+  virtual double* righthand(int _n) = 0;
+  virtual double* weighted_Jacobi(double* _A, double* _f, double* _init, int _n, double weight, int times) = 0;
+  virtual double* residual(double* _A, double* _f, double* _u, int _n) = 0;
+  virtual double* ref_solution(int _n) = 0;
+  virtual double max_norm(double* _u, int _n) = 0;
+  virtual double two_norm(double* _u, int _n) = 0;
+  virtual double* onestep_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2) = 0;
+  virtual int n_iteration_V_cycle(int _n, int _t1, int _t2) = 0;
+  virtual double* V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2) = 0;
+  virtual double* fm_cycle(int &_n, double* _f, int _t1, int _t2) = 0;
+  virtual double analysis_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2) = 0;
+  virtual double analysis_fm_cycle(int &_n, double* _f, int _t1, int _t2) = 0;
+};
+
+Grid::Grid(){};
+
+
 template <class RestrictionPolicy, class InterpolationPolicy, class Function>
-class Multigrid: public RestrictionPolicy, public InterpolationPolicy, public Function{
+class Multigrid:public Grid, public RestrictionPolicy, public InterpolationPolicy, public Function{
 private:
   std::pair<double,double> boundary;
   double* initial;
@@ -118,28 +144,28 @@ public:
   Multigrid();
   Multigrid(std::pair<double,double> _boundary, double* _initial, std::pair<int,double> _criteria);
   ~Multigrid();
-  void load_boundary(std::pair<double,double> _boundary);
-  std::pair<double,double> get_boundary() const;
-  void load_initial(double* _initial);
-  double* get_initial() const;
-  void load_criteria(std::pair<int,double> _criteria);
-  std::pair<int,double> get_criteria() const;
+  virtual void load_boundary(std::pair<double,double> _boundary);
+  virtual std::pair<double,double> get_boundary() const;
+  virtual void load_initial(double* _initial);
+  virtual double* get_initial() const;
+  virtual void load_criteria(std::pair<int,double> _criteria);
+  virtual std::pair<int,double> get_criteria() const;
   void test_restriction(int &n);
   void test_interpolation(int &n);
-  double* lefthand(int _n);
-  double* righthand(int _n);
-  double* weighted_Jacobi(double* _A, double* _f, double* _init, int _n, double weight, int times);
-  double* residual(double* _A, double* _f, double* _u, int _n);
-  double* ref_solution(int _n);
-  double max_norm(double* _u, int _n);
-  double two_norm(double* _u, int _n);
-  double* onestep_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
-  int n_iteration_V_cycle(int _n, int _t1, int _t2);
-  double* V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
-  double* fm_cycle(int &_n, double* _f, int _t1, int _t2);
+  virtual double* lefthand(int _n);
+  virtual double* righthand(int _n);
+  virtual double* weighted_Jacobi(double* _A, double* _f, double* _init, int _n, double weight, int times);
+  virtual double* residual(double* _A, double* _f, double* _u, int _n);
+  virtual double* ref_solution(int _n);
+  virtual double max_norm(double* _u, int _n);
+  virtual double two_norm(double* _u, int _n);
+  virtual double* onestep_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
+  virtual int n_iteration_V_cycle(int _n, int _t1, int _t2);
+  virtual double* V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
+  virtual double* fm_cycle(int &_n, double* _f, int _t1, int _t2);
   int n_iteration_fm_cycle(int _n, int _t1, int _t2);
-  double analysis_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
-  double analysis_fm_cycle(int &_n, double* _f, int _t1, int _t2);
+  virtual double analysis_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
+  virtual double analysis_fm_cycle(int &_n, double* _f, int _t1, int _t2);
 };
 
 
