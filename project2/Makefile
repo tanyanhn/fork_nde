@@ -3,7 +3,7 @@ all: test.o Multigrid.h
 test.o:
 	g++ -c test.cpp -std=c++11
 clean:
-	rm *.m
 	rm *.o
 	rm test
+	rm *.m
 

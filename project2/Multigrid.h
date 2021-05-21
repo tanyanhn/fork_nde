@@ -327,18 +327,17 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::V_cycle(double* _v, in
     return _v;
   }
   else if (criteria.first == 1){
-    double tol = criteria.second;
-    double* ref_solution = this->ref_solution(_n);
-    double ref_norm = this ->two_norm(ref_solution,_n);
-    double err = ref_norm;
+    double tol = criteria.second;;
+    double* res;
+    double* A = this->lefthand(_n);
+    double f_norm = this ->two_norm(_f,_n);
+    double res_norm = f_norm;
     int count = 0;
-    while (err/ref_norm > tol && count < 20){
+    while (res_norm/f_norm > tol && count < 20){
       _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
       count++;
-      double* err_vector = new double[_n];
-      for (int i = 0 ; i < _n-1 ; i++)
-	err_vector[i] = ref_solution[i] - _v[i];
-      err = this->two_norm(err_vector, _n);
+      res = this->residual(A,_f,_v,_n);
+      res_norm = this->two_norm(res,_n);
     }
     return _v;
   }
@@ -382,13 +381,14 @@ double Multigrid<RestrictionPolicy,InterpolationPolicy>::analysis_V_cycle(double
   std::string ss = "V_cycle_" + std::to_string(_n) + ".m";
   const char *s = ss.c_str();
   os.open(s);
+  double f_norm = this ->two_norm(_f,_n);
+  double res_norm = f_norm;
   os << "res=[\n";
   if (criteria.first == 0){
     int MAX = (int)(criteria.second + 0.01);
     int count = 0;
     double* A = this->lefthand(_n);
     double* res;
-    double res_norm;
     while (count < MAX){
       _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
       count++;
@@ -405,39 +405,41 @@ double Multigrid<RestrictionPolicy,InterpolationPolicy>::analysis_V_cycle(double
       err_vector[i] = ref_solution[i] - _v[i];
     double err = this->max_norm(err_vector, _n);
     os << "];\n";
-    os << "plot(1:" << count << ",res);";
+    os << "[n,m] = size(res);\n";
+    os << "t = res(2:n)./res(1:n-1);\n";
+    os << "rate = sum(t)/(n-1);\n";
+    os << "disp(['Reduction rate of residuals =',num2str(rate)]);\n";
+    os << "semilogy(1:" << count << ",res,'*-');\n";
     os.close();
     return err;
   }
   else if (criteria.first == 1){
     double tol = criteria.second;
     double* ref_solution = this->ref_solution(_n);
-    double ref_norm = this ->two_norm(ref_solution,_n);
-    double err = ref_norm;
+    //double ref_norm = this ->two_norm(ref_solution,_n);
     double* A = this->lefthand(_n);
     double* res;
     double* err_vector = new double[_n-1];
     int count = 0;
-    double refff = this ->two_norm(_f,_n);
-    double res_norm = refff;
-    std::cout << "ref:" << refff << std::endl;
-    while (res_norm/refff > tol && count < 20){
+    while (res_norm/f_norm > tol && count < 20){
       _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
       count++;
       res = this->residual(A,_f,_v,_n);
       res_norm = this->two_norm(res,_n);
       std::cout << "After " << count << " times V-cycle, residual is:" << std::endl;
-      //for (int i = 0 ; i < _n-1 ; i++)
-      //	std::cout << res[i] << std::endl;
-      os << res_norm << ",\n";
       for (int i = 0 ; i < _n-1 ; i++)
-	err_vector[i] = ref_solution[i] - _v[i];
-      err = this->two_norm(err_vector, _n);
-      std::cout << res_norm << std::endl;
+        std::cout << res[i] << std::endl;
+      os << res_norm << ",\n";
     }
-    err = this->max_norm(err_vector, _n);
+    for (int i = 0 ; i < _n-1 ; i++)
+	err_vector[i] = ref_solution[i] - _v[i];
+    double err = this->max_norm(err_vector, _n);
     os << "];\n";
-    os << "plot(1:" << count << ",res);";
+    os << "[n,m] = size(res);\n";
+    os << "t = res(2:n)./res(1:n-1);\n";
+    os << "rate = sum(t)/(n-1);\n";
+    os << "disp(['Reduction rate of residuals =',num2str(rate)]);\n";
+    os << "semilogy(1:" << count << ",res,'*-');\n";
     os.close();
     return err;
   }
