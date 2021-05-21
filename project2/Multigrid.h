@@ -1,6 +1,9 @@
 #ifndef __MGGS_MULTIGRID__
 #define __MGGS_MULTIGRID__
+
 #include <iostream>
+#include <fstream>
+#include <string>
 #include <cmath>
 #include <map>
 #include "cblas.h"
@@ -114,14 +117,15 @@ public:
   double* righthand(int _n);
   double* weighted_Jacobi(double* _A, double* _f, double* _init, int _n, double weight, int times);
   double* residual(double* _A, double* _f, double* _u, int _n);
-  double* _residual(double* _A, double* _f, double* _u, int _n);
   double* ref_solution(int _n);
   double max_norm(double* _u, int _n);
+  double two_norm(double* _u, int _n);
   double* onestep_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
   int n_iteration_V_cycle(int _n, int _t1, int _t2);
   double* V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
   double* fm_cycle(int &_n, double* _f, int _t1, int _t2);
   int n_iteration_fm_cycle(int _n, int _t1, int _t2);
+  double analysis_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
 };
 
 
@@ -249,17 +253,9 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::weighted_Jacobi(double
   return result;
 }
 
-template <class RestrictionPolicy, class InterpolationPolicy>
-double* Multigrid<RestrictionPolicy,InterpolationPolicy>::residual(double* _A, double* _f, double* _u, int _n){
-  double* result = new double[_n-1];
-  cblas_dgemv(CblasRowMajor,CblasNoTrans,_n-1,_n-1,1.0,_A,_n-1,_u,1,0,result,1);
-  for (int i = 0 ; i < _n-1 ; i++)
-    result[i] -= _f[i];
-  return result;
-}
 
 template <class RestrictionPolicy, class InterpolationPolicy>
-double* Multigrid<RestrictionPolicy,InterpolationPolicy>::_residual(double* _A, double* _f, double* _u, int _n){
+double* Multigrid<RestrictionPolicy,InterpolationPolicy>::residual(double* _A, double* _f, double* _u, int _n){
   double* result = new double[_n-1];
   cblas_dgemv(CblasRowMajor,CblasNoTrans,_n-1,_n-1,-1.0,_A,_n-1,_u,1,0,result,1);
   for (int i = 0 ; i < _n-1 ; i++)
@@ -280,8 +276,15 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::ref_solution(int _n){
 template <class RestrictionPolicy, class InterpolationPolicy>
 double Multigrid<RestrictionPolicy,InterpolationPolicy>::max_norm(double* _u, int _n){
   int index = (int)cblas_idamax(_n-1,_u,1);
-  return _u[index];
+  return fabs(_u[index]);
 }
+
+template <class RestrictionPolicy, class InterpolationPolicy>
+double Multigrid<RestrictionPolicy,InterpolationPolicy>::two_norm(double* _u, int _n){
+  double result = cblas_dnrm2(_n-1,_u,1);
+  return result;
+}
+
 
 template <class RestrictionPolicy, class InterpolationPolicy>
 double* Multigrid<RestrictionPolicy,InterpolationPolicy>::onestep_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2){
@@ -289,7 +292,7 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::onestep_V_cycle(double
   double* A = this->lefthand(_n);
   double* v = weighted_Jacobi(A,_f,_v,_n,weight,_t1);
   if (_n > 4){
-    double* f2 = RestrictionPolicy().action(this->_residual(A,_f,v,_n),_n);
+    double* f2 = RestrictionPolicy().action(this->residual(A,_f,v,_n),_n);
     double* _v2 = new double[_n-1];
     for (int i = 0 ; i < _n-1 ; i++)
       _v2[i] = 0;
@@ -317,24 +320,25 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy>::V_cycle(double* _v, in
   if (criteria.first == 0){
     int MAX = (int)(criteria.second + 0.01);
     int count = 0;
-    int n_iteration = this->n_iteration_V_cycle(_n,_t1,_t2);
     while (count < MAX){
       _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
-      count += n_iteration;
+      count++;
     }
     return _v;
   }
   else if (criteria.first == 1){
     double tol = criteria.second;
     double* ref_solution = this->ref_solution(_n);
-    double ref_norm = this ->max_norm(ref_solution,_n);
+    double ref_norm = this ->two_norm(ref_solution,_n);
     double err = ref_norm;
-    while (err/ref_norm > tol){
+    int count = 0;
+    while (err/ref_norm > tol && count < 20){
       _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
+      count++;
       double* err_vector = new double[_n];
       for (int i = 0 ; i < _n-1 ; i++)
-	err_vector[i] = _v[i] - ref_solution[i];
-      err = this->max_norm(err_vector, _n);
+	err_vector[i] = ref_solution[i] - _v[i];
+      err = this->two_norm(err_vector, _n);
     }
     return _v;
   }
@@ -372,6 +376,76 @@ int Multigrid<RestrictionPolicy,InterpolationPolicy>::n_iteration_fm_cycle(int _
   return max;
 }
 
+template <class RestrictionPolicy, class InterpolationPolicy>
+double Multigrid<RestrictionPolicy,InterpolationPolicy>::analysis_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2){
+  std::ofstream os;
+  std::string ss = "V_cycle_" + std::to_string(_n) + ".m";
+  const char *s = ss.c_str();
+  os.open(s);
+  os << "res=[\n";
+  if (criteria.first == 0){
+    int MAX = (int)(criteria.second + 0.01);
+    int count = 0;
+    double* A = this->lefthand(_n);
+    double* res;
+    double res_norm;
+    while (count < MAX){
+      _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
+      count++;
+      res = this->residual(A,_f,_v,_n);
+      res_norm = this->two_norm(res,_n);
+      std::cout << "After " << count << "V-cycle, residual is:" << std::endl;
+      for (int i = 0 ; i < _n-1 ; i++)
+	std::cout << res[i] << std::endl;
+      os << res_norm << ",\n";
+    }
+    double* ref_solution = this->ref_solution(_n);
+    double* err_vector = new double[_n-1];
+    for (int i = 0 ; i < _n-1 ; i++)
+      err_vector[i] = ref_solution[i] - _v[i];
+    double err = this->max_norm(err_vector, _n);
+    os << "];\n";
+    os << "plot(1:" << count << ",res);";
+    os.close();
+    return err;
+  }
+  else if (criteria.first == 1){
+    double tol = criteria.second;
+    double* ref_solution = this->ref_solution(_n);
+    double ref_norm = this ->two_norm(ref_solution,_n);
+    double err = ref_norm;
+    double* A = this->lefthand(_n);
+    double* res;
+    double* err_vector = new double[_n-1];
+    int count = 0;
+    double refff = this ->two_norm(_f,_n);
+    double res_norm = refff;
+    std::cout << "ref:" << refff << std::endl;
+    while (res_norm/refff > tol && count < 20){
+      _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
+      count++;
+      res = this->residual(A,_f,_v,_n);
+      res_norm = this->two_norm(res,_n);
+      std::cout << "After " << count << " times V-cycle, residual is:" << std::endl;
+      //for (int i = 0 ; i < _n-1 ; i++)
+      //	std::cout << res[i] << std::endl;
+      os << res_norm << ",\n";
+      for (int i = 0 ; i < _n-1 ; i++)
+	err_vector[i] = ref_solution[i] - _v[i];
+      err = this->two_norm(err_vector, _n);
+      std::cout << res_norm << std::endl;
+    }
+    err = this->max_norm(err_vector, _n);
+    os << "];\n";
+    os << "plot(1:" << count << ",res);";
+    os.close();
+    return err;
+  }
+  else{
+    std::cerr << "Wrong criteria!" << std::endl;
+    return 0;
+  }
+}
 
 
 #else
