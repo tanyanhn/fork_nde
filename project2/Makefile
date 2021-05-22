@@ -8,6 +8,8 @@ clean:
 	rm *.m
 test:
 	./main Inputfile/test
+test1:
+	./main Inputfile/test1 > data
 cleant:
 	rm *.o
 	rm test
