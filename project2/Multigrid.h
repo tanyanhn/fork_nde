@@ -129,6 +129,7 @@ class Grid{
   virtual double* fm_cycle(int &_n, double* _f, int _t1, int _t2) = 0;
   virtual double analysis_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2) = 0;
   virtual double analysis_fm_cycle(int &_n, double* _f, int _t1, int _t2) = 0;
+  virtual void show_result(double* _result, int _n, const std::string str) = 0;
 };
 
 Grid::Grid(){};
@@ -166,6 +167,7 @@ public:
   int n_iteration_fm_cycle(int _n, int _t1, int _t2);
   virtual double analysis_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
   virtual double analysis_fm_cycle(int &_n, double* _f, int _t1, int _t2);
+  virtual void show_result(double* _result, int _n, const std::string str);
 };
 
 
@@ -498,6 +500,27 @@ double Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::analysis_fm_cy
     return err;
 }
 
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+void Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::show_result(double* _result, int _n, const std::string str){
+  double* sol = this->ref_solution(_n);
+  std::ofstream os;
+  std::string ss = str + "_show_" + std::to_string(_n) + ".m";
+  const char *s = ss.c_str();
+  os.open(s);
+  os << "y = [\n";
+  for (int i = 0 ; i < _n-1 ; i++)
+    os << _result[i] << "," << sol[i] <<";\n";
+  os << "];\n";
+  os << "x = 1:" << _n-1 << ";\n";
+  os << "x = x/" << _n << ";\n";
+  os << "result = y(:,1);\n";
+  os << "solution = y(:,2);\n";
+  os << "hold on;\n";
+  os << "plot(x,result,'*');\n";
+  os << "plot(x,solution,'-');\n";
+  os << "legend('result','exact sulution');\n";
+  os.close();
+}
 
 #else
 //do nothing

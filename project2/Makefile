@@ -7,8 +7,7 @@ clean:
 	rm main
 	rm *.m
 test:
-	g++ -c test.cpp -std=c++11
-	g++ -o test test.o Multigrid.h -lblas -std=c++11
+	./main Inputfile/test
 cleant:
 	rm *.o
 	rm test

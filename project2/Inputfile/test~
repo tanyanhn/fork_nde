@@ -1,0 +1,2 @@
+index	boundary_conditions	restriction	interpolation	cycles		stopping_criteria	initial_type	n	analysis
+1	nonhomogeneous		full_weighting	linear		full_multigrid	{1,1e-8}		0		128	0
