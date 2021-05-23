@@ -1,2 +1,2 @@
 index	boundary_conditions	restriction	interpolation	cycles		criteria_type	criteria	initial_type	n	analysis
-1	nonhomogeneous		full_weighting	linear		V_cycle		1		1e-15		0		128	1
+1	nonhomogeneous		full_weighting	quadratic	V_cycle		1		1e-8		0		128	1

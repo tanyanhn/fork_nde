@@ -92,16 +92,18 @@ class quadratic{
 public:
   static double* action(double* _vec, int& n){
     double* vec = new double[2*n - 1];
-    vec[0] = 1.5*_vec[0]-0.5*_vec[1];
-    for (int i = 1; i < 2*n -4 ; i++){
+    vec[0] = 0.0625*(5*_vec[0]+3*_vec[1]);
+    vec[1] = _vec[0];
+    vec[2] = 0.0625*(5*_vec[0]+5*_vec[1]+3*_vec[2]);
+    for (int i = 3; i < 2*n -4 ; i++){
       if (i%2 == 1)
 	vec[i] = _vec[(i-1)/2];
       else
-	vec[i] = 0.125*(15*_vec[i/2 - 1]-10*_vec[i/2]+3*_vec[i/2 + 1]);
+	vec[i] = 0.0625*(3*_vec[i/2 - 2]+5*_vec[i/2 - 1]+5*_vec[i/2]+3*_vec[i/2 + 1]);
     }
-    vec[2*n-2] = 1.5*_vec[n-2]-0.5*_vec[n-3];
+    vec[2*n-4] = 0.0625*(5*_vec[n-2]+5*_vec[n-3]+3*_vec[n-4]);
     vec[2*n-3] = _vec[n-2];
-    vec[2*n-4] = 0.125*(15*_vec[n-2]-10*_vec[n-3]+3*_vec[n-4]);
+    vec[2*n-2] = 0.0625*(5*_vec[n-2]+3*_vec[n-3]);
     n = n*2;
     return vec;
   }
