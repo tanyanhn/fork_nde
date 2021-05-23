@@ -124,6 +124,7 @@ class Grid{
   virtual double max_norm(double* _u, int _n) = 0;
   virtual double two_norm(double* _u, int _n) = 0;
   virtual double* onestep_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2) = 0;
+  virtual double* onestepr_V_cycle(double* _v, double* _r, int& _n, double* _f, int _t1, int _t2) = 0;
   virtual int n_iteration_V_cycle(int _n, int _t1, int _t2) = 0;
   virtual double* V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2) = 0;
   virtual double* fm_cycle(int &_n, double* _f, int _t1, int _t2) = 0;
@@ -161,6 +162,7 @@ public:
   virtual double max_norm(double* _u, int _n);
   virtual double two_norm(double* _u, int _n);
   virtual double* onestep_V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
+  virtual double* onestepr_V_cycle(double* _v, double* _r, int& _n, double* _f, int _t1, int _t2);
   virtual int n_iteration_V_cycle(int _n, int _t1, int _t2);
   virtual double* V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2);
   virtual double* fm_cycle(int &_n, double* _f, int _t1, int _t2);
@@ -345,6 +347,22 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::onestep_V_cyc
 }
 
 template <class RestrictionPolicy, class InterpolationPolicy, class Function>
+double* Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::onestepr_V_cycle(double* _v, double* _r, int& _n, double* _f, int _t1, int _t2){
+  double weight = 2.0/3;
+  double* A = this->lefthand(_n);
+  double* f2 = RestrictionPolicy().action(_r,_n);
+  double* _v2 = new double[_n-1];
+  for (int i = 0 ; i < _n-1 ; i++)
+    _v2[i] = 0;
+  double* v2 = this->onestep_V_cycle(_v2,_n,f2,_t1,_t2);
+  double* v2c = InterpolationPolicy().action(v2,_n);
+  for (int i = 0 ; i < _n-1 ; i++)
+    _v[i] += v2c[i];
+  double* result = weighted_Jacobi(A,_f,_v,_n,weight,_t2);
+  return result;
+}
+
+template <class RestrictionPolicy, class InterpolationPolicy, class Function>
 int Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::n_iteration_V_cycle(int _n, int _t1, int _t2){
   int max = 0;
   while(_n >= 4){
@@ -358,22 +376,27 @@ template <class RestrictionPolicy, class InterpolationPolicy, class Function>
 double* Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::V_cycle(double* _v, int& _n, double* _f, int _t1, int _t2){
   if (criteria.first == 0){
     int MAX = (int)(criteria.second + 0.01);
-    int count = 0;
+    int count = 1;
+    double* A = this->lefthand(_n);
+    _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
+    double* res = this->residual(A,_f,_v,_n);
     while (count < MAX){
-      _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
+      _v = this->onestepr_V_cycle(_v,res,_n,_f,_t1,_t2);
       count++;
+      res = this->residual(A,_f,_v,_n);
     }
     return _v;
   }
   else if (criteria.first == 1){
     double tol = criteria.second;;
-    double* res;
     double* A = this->lefthand(_n);
     double f_norm = this ->two_norm(_f,_n);
-    double res_norm = f_norm;
-    int count = 0;
+    int count = 1;
+    _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
+    double* res = this->residual(A,_f,_v,_n);
+    double res_norm = this->two_norm(res,_n);
     while (res_norm/f_norm > tol && count < 20){
-      _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
+      _v = this->onestepr_V_cycle(_v,res,_n,_f,_t1,_t2);
       count++;
       res = this->residual(A,_f,_v,_n);
       res_norm = this->two_norm(res,_n);
@@ -399,7 +422,7 @@ double* Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::fm_cycle(int 
     for (int i = 0 ; i < _n-1 ; i++)
       v[i] = 0;
   }
-  double* result = this->onestep_V_cycle(v,_n,_f,_t1,_t2);
+  double* result = this->V_cycle(v,_n,_f,_t1,_t2);
   return result;
 }
 
@@ -421,15 +444,21 @@ double Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::analysis_V_cyc
   const char *s = ss.c_str();
   os.open(s);
   double f_norm = this ->two_norm(_f,_n);
-  double res_norm = f_norm;
+  double res_norm;
   os << "res=[\n";
   if (criteria.first == 0){
     int MAX = (int)(criteria.second + 0.01);
-    int count = 0;
+    int count = 1;
     double* A = this->lefthand(_n);
-    double* res;
+    _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
+    double* res = this->residual(A,_f,_v,_n);
+    res_norm = this->two_norm(res,_n);
+    std::cout << "After " << count << "V-cycle, residual is:" << std::endl;
+    for (int i = 0 ; i < _n-1 ; i++)
+      std::cout << res[i] << std::endl;
+    os << res_norm << ",\n";
     while (count < MAX){
-      _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
+      _v = this->onestepr_V_cycle(_v,res,_n,_f,_t1,_t2);
       count++;
       res = this->residual(A,_f,_v,_n);
       res_norm = this->two_norm(res,_n);
@@ -457,11 +486,17 @@ double Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::analysis_V_cyc
     double* ref_solution = this->ref_solution(_n);
     //double ref_norm = this ->two_norm(ref_solution,_n);
     double* A = this->lefthand(_n);
-    double* res;
+    _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
+    double* res = this->residual(A,_f,_v,_n);
+    res_norm = this->two_norm(res,_n);
     double* err_vector = new double[_n-1];
-    int count = 0;
+    int count = 1;
+    std::cout << "After " << count << " times V-cycle, residual is:" << std::endl;
+    for (int i = 0 ; i < _n-1 ; i++)
+      std::cout << res[i] << std::endl;
+    os << res_norm << ",\n";
     while (res_norm/f_norm > tol && count < 20){
-      _v = this->onestep_V_cycle(_v,_n,_f,_t1,_t2);
+      _v = this->onestepr_V_cycle(_v,res,_n,_f,_t1,_t2);
       count++;
       res = this->residual(A,_f,_v,_n);
       res_norm = this->two_norm(res,_n);
@@ -480,6 +515,8 @@ double Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::analysis_V_cyc
     os << "disp(['Reduction rate of residuals =',num2str(rate)]);\n";
     os << "semilogy(1:" << count << ",res,'*-');\n";
     os.close();
+    if (count == 20)
+      std::cout << "Fail to achieve the preset accuracy." << std::endl;
     return err;
   }
   else{
