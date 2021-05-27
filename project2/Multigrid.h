@@ -110,7 +110,11 @@ public:
 };
 
 class Grid{
-  public:
+ protected:
+  std::pair<double,double> boundary;
+  double* initial;
+  std::pair<int,double> criteria;
+ public:
   Grid();
   virtual void load_boundary(std::pair<double,double> _boundary) = 0;
   virtual std::pair<double,double> get_boundary() const = 0;
@@ -131,10 +135,6 @@ Grid::Grid(){};
 
 template <class RestrictionPolicy, class InterpolationPolicy, class Function>
 class Multigrid:public Grid, public RestrictionPolicy, public InterpolationPolicy, public Function{
-private:
-  std::pair<double,double> boundary;
-  double* initial;
-  std::pair<int,double> criteria;
 public:
   Multigrid();
   Multigrid(std::pair<double,double> _boundary, double* _initial, std::pair<int,double> _criteria);
