@@ -52,7 +52,7 @@ int main(int argc, char* argv[]){
 	std::cout << "Run V_cycle_show_" << n << ".m by matlab to get calculation effect of result." << std::endl;
       }
     }
-    else if (cycles == "full_multigrid"){
+    else if (cycles == "fm_cycle"){
       if (analysis){
 	std::cout << "Problem " << index << ": " << std::endl;
 	double result = pGrid->analysis_fm_cycle(n,f,2000,2000);
