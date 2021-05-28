@@ -10,6 +10,8 @@ test:
 	./main Inputfile/test
 test1:
 	./main Inputfile/test1 > data
+test22:
+	./main Inputfile/test22
 cleant:
 	rm *.o
 	rm test
