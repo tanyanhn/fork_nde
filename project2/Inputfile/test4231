@@ -1,0 +1,2 @@
+index	boundary	restriction	interpolation	cycles	 criteria_type	criteria	initial_type	n	analysis
+1	homogeneous	injection	linear  	V_cycle	 1		1e-8		0		128	1

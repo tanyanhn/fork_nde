@@ -24,14 +24,11 @@ class function1{
 class function2{
   public:
   double ref(double _x){
-    return exp(sin(_x))+(1-exp(sin(1)))*_x-1;
+    return sin(M_PI*_x);
   }
   
   double action(double _x){
-     double tmp1 = sin(_x);
-     double tmp2 = cos(_x);
-     double tmp3 = exp(tmp1);
-     return tmp1*tmp3-tmp2*tmp2*tmp3;
+     return M_PI*M_PI*sin(M_PI*_x);
   }
 };
 
