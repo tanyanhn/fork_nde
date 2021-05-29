@@ -27,6 +27,28 @@ test233:
 	./main Inputfile/test2332 > Outputfile/test233_256
 	./main Inputfile/test2333 > Outputfile/test233_512
 	./main Inputfile/test2334 > Outputfile/test233_1024
+test234:
+	./main Inputfile/test2341 > Outputfile/test234_128
+	./main Inputfile/test2342 > Outputfile/test234_256
+	./main Inputfile/test2343 > Outputfile/test234_512
+	./main Inputfile/test2344 > Outputfile/test234_1024
+test241:
+	./main Inputfile/test241
+test242:
+	./main Inputfile/test242
+test243:
+	./main Inputfile/test243
+test244:
+	./main Inputfile/test244
+test3:
+	./main Inputfile/test31 > Outputfile/test31
+	matlab -nodesktop -nosplash -r V_cycle_1024
+	./main Inputfile/test32 > Outputfile/test32
+	matlab -nodesktop -nosplash -r V_cycle_1024
+	./main Inputfile/test33 > Outputfile/test33
+	matlab -nodesktop -nosplash -r V_cycle_1024
+	./main Inputfile/test34 > Outputfile/test34
+	matlab -nodesktop -nosplash -r V_cycle_1024
 cleant:
 	rm *.o
 	rm test
