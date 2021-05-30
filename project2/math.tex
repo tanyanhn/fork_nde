@@ -1,0 +1,296 @@
+\documentclass[a4paper,twocolumn]{article}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage[justification=centering]{caption}
+\usepackage{subfigure}  
+\usepackage{multirow}
+\usepackage{balance}
+\lstset{language=Matlab}
+\lstset{breaklines}
+\lstset{extendedchars=false}
+
+\usepackage{amsmath,amsfonts,amsthm,amssymb}
+\theoremstyle{definition}
+\newtheorem{thm}{Theorem}
+\newtheorem{exmp}{Example}
+\newtheorem{defn}{Definition}
+\newtheorem{lema}{Lemma}
+\newtheorem{prop}{Proposition}
+\newtheorem{coro}{Corollary}
+
+
+\renewcommand{\baselinestretch}{1.25}
+
+%------------setlength----------------%
+\setlength{\textwidth}{162mm}
+%\setlength{\textheight}{190mm}
+\setlength{\textheight}{231mm}
+\setlength{\headheight}{-0.1cm}
+\setlength{\topmargin}{-0.1cm}
+\setlength{\oddsidemargin}{-0cm}
+\setlength{\evensidemargin}{-0cm}
+
+\setlength\columnsep{12pt}
+\setlength\columnseprule{0.4pt}
+
+\setlength{\parskip}{1mm}
+\setlength{\unitlength}{1mm}
+\setlength{\parindent}{2em}
+
+\title{Project2 - Mathematical theory}
+
+\author{Li Zhiqi\quad3180103041}
+
+\begin{document}
+\maketitle
+\section{Problem analysis}
+Our goal is to use the multigrid solver to solve the one-dimensional Possion equation
+$$
+-u^{\prime \prime}(x)=f(x)
+$$
+on $\Omega = [0,1]$ with Dirichlet boundary condition. The solver are expected to work when facing with different boundary conditions, different restriction and interpolation operators, different stopping criteria and different initial guess. \\
+Firstly, we turn the problem into a linear system of equations. For the function
+$$
+u(x) = \exp(\sin(x)),
+$$
+we get 
+$$
+f(x) = \sin(x)\exp(\sin(x))-\cos^2(x)\exp(\sin(x)),
+$$
+and
+$$
+u(0) = \alpha = 1,u(1) = \beta = \exp(\sin(1)) .
+$$
+The situation is similar when boundary conditions are homogeneous.\\
+By finite difference method with a uniform gird size $h = \frac{1}{n}$, our discretization of the equation yields a linear system
+$$
+A\textbf{u} = \textbf{f}
+$$
+where
+$$
+A=\frac{1}{h^{2}}\left[\begin{array}{ccccccc}
+2 & -1 & & & & & \\
+1 & -2 & 1 & & & & \\
+& 1 & -2 & 1 & & & \\
+& & \ddots & \ddots & \ddots & & \\
+& & & 1 & -2 & 1 & \\
+& & & & 1 & -2 & 1 \\
+& & & & & -1 & 2
+\end{array}\right],
+$$
+\newpage
+
+$$
+\mathbf{u}=\left[\begin{array}{c}
+U_{1} \\
+U_{2} \\
+U_{3} \\
+\vdots \\
+U_{n-2} \\
+U_{n-1}
+\end{array}\right], \quad \mathbf{f}=\left[\begin{array}{c}
+f\left(x_{1}\right)+\frac{\alpha}{h^{2}} \\
+f\left(x_{2}\right) \\
+f\left(x_{3}\right) \\
+\vdots \\
+f\left(x_{n-2}\right) \\
+f\left(x_{n-1}\right)+\frac{\beta}{h^{2}}
+\end{array}\right],
+$$
+and $x_j = jh , j = 1,2,\cdots,n-1$. We will compute $n-1$ values $U_{1},U_{2},\cdots,U_{n-1}$ where each $U_{j}$ approximates $u(x_j)$.\\
+The eigenvalues and eigenvectors of A are
+$$
+\begin{aligned}
+\lambda_{k}(A)&=\frac{4}{h^{2}} \sin ^{2} \frac{k \pi}{2 n} \ , \\
+\mathbf{w}_{k, j}&=\sin \frac{j k \pi}{n} ,
+\end{aligned}
+$$
+where $j,k = 1,2,\cdots ,n-1$.
+\section{Preparation for multigrid solver}
+Before introducing multigrid solver, we need to make some preparations. The following is necessary when using multigrid.
+\subsection{Weighted Jacobi method}
+Weighted Jacobi method is one of classical iterative methods for solving a linear system $A\textbf{u} = \textbf{f}$, which has the form
+$$
+\begin{aligned}
+\mathbf{u}^{*} &=T \mathbf{u}^{(\ell)}+\mathbf{c} \\
+\mathbf{u}^{(\ell+1)} &=(1-\omega) \mathbf{u}^{(\ell)}+\omega \mathbf{u}^{*},
+\end{aligned}
+$$
+where $A = D + L + U$ with $D, L, U$ being the diagonal, lower triangular, and upper tri-angular part of $A$, and $T=-D^{-1}(L+U), \quad \mathbf{c}=D^{-1} \mathbf{f}$.
+\newpage
+\noindent Dealing with the specific A and $\mathbf{f}$ in the section 1, we have
+$$
+\begin{aligned}
+T_{\omega}&= (1-\omega)I+\omega T \\
+&=(1-\omega)I - \omega D^{-1}(A-D) \\
+&=I - \omega D^{-1}A \\
+&=I - \frac{\omega h^2}{2}A \ ,
+\end{aligned}
+$$
+with the corresponding eigenvalues as
+$$
+\lambda_k(T_{\omega}) = 1 - 2\omega \sin^2\frac{k\pi}{2n} \ .
+$$
+In our multigrid calculation, we always set $\omega = \frac{2}{3}$,
+which performs much better for HF modes than regular Jacobi method.\\
+In summary, we will use the iteration
+$$
+\mathbf{u}^{(\ell+1)} =T_{\omega} \mathbf{u}^{(\ell)}+\mathbf{c}^{\prime}(\mathbf{f})
+$$
+as relaxed operator in multigrid cycles, where 
+$$
+T_{\omega} = I - \frac{h^2}{3}A , \mathbf{c}^{\prime}(\mathbf{f}) = \frac{h^2}{3}\mathbf{f} \ .
+$$
+\subsection{Restriction and interpolation operators}
+Restriction operator $I_h^{2h}$ maps a vector on the fine grid $\Omega^h$ to its counterpart on the coarse grid $\Omega^{2h}$ :
+$$
+I_{h}^{2 h} v^{h}=v^{2 h} \ .
+$$
+Two different restriction operator will be used in our calculation:\\
+\textbf{Full-weighting} operator is given by
+$$
+v_{j}^{2 h}=\frac{1}{4}\left(v_{2 j-1}^{h}+2 v_{2 j}^{h}+v_{2 j+1}^{h}\right) \ ,
+$$
+where $j = 1,2,\cdots,\frac{n}{2} - 1.$\\
+\textbf{Injection} operator is given by
+$$
+v_{j}^{2 h}=v_{2 j}^{h} \ ,
+$$
+where $j = 1,2,\cdots,\frac{n}{2} - 1.$\\
+Correspondingly, interpolation operator $I_{2h}^{h}$ maps a vector on the coarse grid $\Omega^{2h}$ to its counterpart on the fine grid $\Omega^h$   :
+$$
+I_{2 h}^{h} v^{2h}=v^{h} \ .
+$$
+\newpage
+\noindent Two different interpolation operator will be used in our calculation:\\
+\textbf{Linear interpolation} operator is given by
+$$
+\begin{aligned}
+v_{2 j}^{h} &=v_{j}^{2 h} \ , \\
+v_{2 j+1}^{h} &=\frac{1}{2}\left(v_{j}^{2 h}+v_{j+1}^{2 h}\right) \ ,
+\end{aligned}
+$$
+where $j = 1,2,\cdots,\frac{n}{2} - 1$, and we take
+$$
+v_{1}^{h} = \frac{1}{2}v_{1}^{2h},\quad v_{n-1}^{h} = \frac{1}{2}v_{\frac{n}{2} - 1}^{2h}
+$$
+as values on the boundary.\\
+\textbf{Quadratic interpolation} operator is given by
+$$
+\begin{aligned}
+v_{2 j}^{h} &=v_{j}^{2 h} \ , \\
+v_{2 j+1}^{h} =\frac{1}{16}(3v_{j-1}^{2h} & +5v_{j}^{2 h}  +5v_{j+1}^{2 h}+3v_{j+1}^{2h} ) \ ,
+\end{aligned}
+$$
+where $j = 1,2,\cdots,\frac{n}{2} - 1$, and we take
+$$
+\begin{aligned}
+v_{1}^{h} &= \frac{5}{16}v_{1}^{2h}+\frac{3}{16}v_{2}^{2h}, \\ v_{3}^{h} &= \frac{5}{16}v_{1}^{2h}+\frac{5}{16}v_{2}^{2h}+\frac{3}{16}v_{3}^{2h} \ ,\\
+v_{n-3}^{h} &=\frac{5}{16}v_{\frac{n}{2} - 1}^{2h}+\frac{5}{16}v_{\frac{n}{2} - 2}^{2h}+\frac{3}{16}v_{\frac{n}{2} - 3}^{2h} \ ,\\
+v_{n-1}^{h} &=\frac{5}{16}v_{\frac{n}{2} - 1}^{2h}+\frac{3}{16}v_{\frac{n}{2} - 2}^{2h} \ ,
+\end{aligned}
+$$
+as values on the boundary.\\
+\section{V-cycle}
+In section 2 , we have shown relaxed operator, restriction operator and interpolation operator as preparations for multigrid. Next we will show V-cycle and its effectiveness analysis.
+\subsection{V-cycle scheme}
+The V-cycle scheme
+$$
+\mathbf{v}^h \gets \mathrm{VC}^h(\mathbf{v}^h,\mathbf{f}^h,\nu_1,\nu_2) 
+$$
+solving $A\textbf{u} = \textbf{f}$ is given by\\
+(1)Relax $\nu_1$ times on $A^h\textbf{u}^h = \textbf{f}^h$ by Weighted Jacobi method with initial guess $\mathbf{v}^h$. Specifically, calculate $$\mathbf{v}^{(\ell+1)} =T_{\omega}^h \mathbf{v}^{(\ell)}+\mathbf{c}^{\prime}(\mathbf{f}^h)$$
+with initial guess $\mathbf{v}^{0} = v^h$, and $T_{\omega}^h,\mathbf{c}^{\prime}(\mathbf{f}^h)$ are listed in the end of section 2.1.
+After iterations, assign value to $\mathbf{v}^h$ with $\mathbf{v}^{(\nu_1)}$.\\\\
+(2)If $\Omega^h$ is the coarsest grid(We take $n \le 6$ as standard), go to step (4).
+Otherwise, calculate 
+$$
+\begin{aligned}
+\mathbf{r}^h &\gets \textbf{f}^h - A^h\textbf{v}^h \ , \\ 
+\mathbf{f}^{2h} &\gets I_h^{2h} \mathbf{r}^h \ , \\
+\mathbf{v}^{2h} &\gets \mathbf{0} \ , \\
+\mathbf{v}^{2h} &\gets \mathrm{VC}^{2h}(\mathbf{v}^{2h},\mathbf{f}^{2h},\nu_1,\nu_2) \ ,
+\end{aligned}
+$$
+where restriction operator $I_h^{2h}$ is selected from full-weighting and injection, which are shown in Section 2.2 .\\\\
+(3)Interpolate error back and correct the solution:
+$$
+\mathbf{v}^{h} \gets \mathbf{v}^{h} +I_{2h}^{h} \mathbf{v}^{2h} \ , 
+$$
+where interpolation operator $I_{2h}^{h}$ is selected from linear interpolation and quadratic interpolation, which are shown in Section 2.2 .\\\\
+(4)Relax $\nu_2$ times on $A^h\textbf{u}^h = \textbf{f}^h$ by Weighted Jacobi method with initial guess $\mathbf{v}^h$. The specific calculation process is the same as step(1). At the end, calculate 
+$$
+\mathbf{r}^h \gets \textbf{f}^h - A^h\textbf{v}^h \ .
+$$
+If  $\left \| \mathbf{r}^h \right \| < \epsilon$ or the scheme has reached number of maximum iterations, output $\textbf{v}^h$ as the result, where $\epsilon$ is the accuracy given by users. Otherwise, go to step (2) with above $\mathbf{r}^h$.
+\subsection{Effectiveness analysis}
+To simplify the analysis, we only consider two-grid V-cycle with number of maximum iterations 1. In fact, the above V-cycle method is just combination and repetition of this simple case.\\
+Consider the iteration matrix of two-grid operator in $\Omega^h$ and $\Omega^{2h}$ when acting on the error vector, we have
+$$
+T G=T_{\omega}^{\nu_{2}}\left[I-I_{2 h}^{h}\left(A^{2 h}\right)^{-1} I_{h}^{2 h} A^{h}\right] T_{\omega}^{\nu_{1}} \ ,         
+$$
+which comes from the subtraction of the action in initial guess $v^h$ and exact solution $u^h$.\\
+Our goal is to estimate the effect of two-grid operator on Fourier modes of different frequencies, especially low-frequency modes. \\
+With full-weighting and linear interpolation as restriction and interpolation operator, we have
+$$
+\begin{aligned}
+I_{h}^{2 h} \mathbf{w}_{k}^{h} &=c_{k} \mathbf{w}_{k}^{2 h}:=\cos ^{2} \frac{k \pi}{2 n} \mathbf{w}_{k}^{2 h}  \ ,\\
+I_{h}^{2 h} \mathbf{w}_{k^{\prime}}^{h} &=-s_{k} \mathbf{w}_{k}^{2 h}:=-\sin ^{2} \frac{k \pi}{2 n} \mathbf{w}_{k}^{2 h} \ , \\
+I_{2 h}^{h} \mathbf{w}_{k}^{2 h}&=c_{k} \mathbf{w}_{k}^{h}-s_{k} \mathbf{w}_{k^{\prime}}^{h} \ ,
+\end{aligned}
+$$
+where $k \in [1,\frac{n}{2}), k'= n-k$. The above formulas come from definitions in section 2.2 and trigonometric identities. \\
+By these formulas, we get the action of two-grid operator on invariant subspace $W_k^h = $ span\{$\mathbf{w}_k^h,\mathbf{w}_{k'}^h$\}:
+$$
+\begin{array}{l}
+T G \mathbf{w}_{k}=\lambda_{k}^{\nu_{1}+\nu_{2}} s_{k} \mathbf{w}_{k}+\lambda_{k}^{\nu_{1}} \lambda_{k^{\prime}}^{\nu_{2}} s_{k} \mathbf{w}_{k^{\prime}}  \\
+T G \mathbf{w}_{k^{\prime}}=\lambda_{k^{\prime}}^{\nu_{1}} \lambda_{k}^{\nu_{2}} c_{k} \mathbf{w}_{k}+\lambda_{k^{\prime}}^{\nu_{1}+\nu_{2}} c_{k} \mathbf{w}_{k^{\prime}} \ ,
+\end{array}
+$$
+where $\lambda_k$ is the eigenvalue of \ $T_\omega$ in section 2.1 .\\
+\textit{Proof}. We only proof the first formula. Firstly consider the case $\nu_1 = \nu_2 = 0$. We have
+$$
+\begin{aligned}
+I_{2 h}^{h} \left(A^{2 h}\right)^{-1} I_{h}^{2 h} A^{h} \mathbf{w}_{k}^{h}&=
+I_{2 h}^{h} \left(A^{2 h}\right)^{-1} I_{h}^{2 h} \frac{4 s_{k}}{h^{2}} \mathbf{w}_{k}^{h}\\
+&=I_{2 h}^{h} \left(A^{2 h}\right)^{-1} \frac{4 c_{k}s_{k}}{h^{2}} \mathbf{w}_{k}^{2h}\\
+&=I_{2 h}^{h} \frac{4 c_{k} s_{k}}{h^{2}} \frac{(2 h)^{2}}{4 \sin ^{2} \frac{k \pi}{n}} \mathbf{w}_{k}^{2 h} \\
+&=I_{2 h}^{h} \mathbf{w}_{k}^{2 h} \\
+&=c_{k} \mathbf{w}_{k}^{h}-s_{k} \mathbf{w}_{k^{\prime}}^{h} \ ,
+\end{aligned}
+$$
+hence
+$$
+\left[I-I_{2 h}^{h}\left(A^{2 h}\right)^{-1} I_{h}^{2 h} A^{h}\right] \mathbf{w}_{k}^{h}=s_{k} \mathbf{w}_{k}^{h}+s_{k} \mathbf{w}_{k^{\prime}}^{h} \ .
+$$
+At last, pre-smoothing incurs a scaling of $\lambda_{k}^{\nu_{1}}$ for both $\mathbf{w}_{k}^{h}$ and $\mathbf{w}_{k^{\prime}}^{h}$, and post-smoothing incurs a scaling of $\lambda_{k}^{\nu_{2}}$ for $\mathbf{w}_{k}^{h}$ and a scaling of $\lambda_{k^{\prime}}^{\nu_{2}}$ for $\mathbf{w}_{k^{\prime}}^{h}$. Hence the first formula holds. The second formula is similar.\qed \\
+Through the above derivation, we can show the effectiveness of two-grid operator. All four coefficients $(\lambda_{k}^{\nu_{1}+\nu_{2}} s_{k},\lambda_{k}^{\nu_{1}}\lambda_{k^{\prime}}^{\nu_{2}} s_{k},\lambda_{k^{\prime}}^{\nu_{1}} \lambda_{k}^{\nu_{2}} c_{k},\lambda_{k^{\prime}}^{\nu_{1}+\nu_{2}} c_{k})$ are always small for any $k$. So the two-grid operator performs well for both LF modes and HF modes.\\
+As mentioned at the beginning of this section, V-cycle is just the combination and repetition of two-grid operator. So far we have completed the effectiveness analysis.
+\section{Full multigrid V-cycle}
+\balance
+The full multigrid V-cycle scheme
+$$
+\mathbf{v}^h \gets \mathrm{FMG}^h(\mathbf{f}^h,\nu_1,\nu_2) 
+$$
+solving $A\textbf{u} = \textbf{f}$ is given by\\
+(1)If $\Omega^h$ is the coarsest grid(We take $n \le 6$ as standard), set $\mathbf{v}^h \gets \mathbf{0}$ and go to step (3).
+Otherwise, calculate 
+$$
+\begin{aligned}
+\mathbf{f}^{2h} &\gets I_h^{2h} \mathbf{f}^h \ , \\
+\mathbf{v}^{2h} &\gets \mathrm{FMG}^{2h}(\mathbf{f}^{2h},\nu_1,\nu_2) \ ,
+\end{aligned}
+$$
+where restriction operator $I_h^{2h}$ is selected from full-weighting and injection.\\\\
+(2)Correct by
+$$
+\mathbf{v}^{h} \gets I_{2h}^{h} \mathbf{v}^{2h} \ , 
+$$
+where interpolation operator $I_{2h}^{h}$ is selected from linear interpolation and quadratic interpolation.\\\\
+(3)Perform a V-cycle with the initial guess $\mathbf{v}^{h}$:
+$$
+\mathbf{v}^h \gets \mathrm{VC}^h(\mathbf{v}^h,\mathbf{f}^h,\nu_1,\nu_2)  \ .
+$$
+\\
+Since full multigrid V-cycle is based on V-cycle, the effectiveness of full multigrid V-cycle can be similarly analyzed.
+\end{document}

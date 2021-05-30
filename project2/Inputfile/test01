@@ -1,0 +1,2 @@
+index	boundary	restriction	interpolation	cycles	 criteria_type	criteria	initial_type	n	analysis
+1	nonhomogeneous	injection	quadratic	V_cycle	 0		10		0		128	0

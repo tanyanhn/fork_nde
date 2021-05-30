@@ -466,6 +466,9 @@ double Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::analysis_V_cyc
     os << "[n,m] = size(res);\n";
     os << "t = res(2:n)./res(1:n-1);\n";
     os << "rate = sum(t)/(n-1);\n";
+    os << "format long;\n";
+    os << "disp(['residuals:']);\n";
+    os << "disp(res);\n";
     os << "disp(['Reduction rate of residuals =',num2str(rate)]);\n";
     os << "semilogy(1:" << count << ",res,'*-');\n";
     os.close();
@@ -502,6 +505,9 @@ double Multigrid<RestrictionPolicy,InterpolationPolicy,Function>::analysis_V_cyc
     os << "[n,m] = size(res);\n";
     os << "t = res(2:n)./res(1:n-1);\n";
     os << "rate = sum(t)/(n-1);\n";
+    os << "format long;\n";
+    os << "disp(['residuals:']);\n";
+    os << "disp(res);\n";
     os << "disp(['Reduction rate of residuals =',num2str(rate)]);\n";
     os << "semilogy(1:" << count << ",res,'*-');\n";
     os.close();
