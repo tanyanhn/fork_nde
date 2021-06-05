@@ -251,10 +251,9 @@ Then we have
 \end{table}\\
 By simple calculation, we get that the convergence order in this case is 1.9833.
 \subsubsection{Full-weighting and quadratic interpolation}
-We discuss full-weighting and quadratic interpolation as restriction operator and interpolation operator in this part. For the whole process is the same as the previous section, we show results only. \\\\
-Use command \textbf{"make test232"} to get results. 
-\newpage
-\noindent $n=128$: (Read 'Output/test232\_128' for details)
+We discuss full-weighting and quadratic interpolation as restriction operator and interpolation operator in this part.  Except for restriction operators and interpolation operators, the inputfile is the same as the previous section. For the whole process is the same as the previous section, we show results only. \\
+Use command \textbf{"make test232"} to get results. \\\\
+$n=128$: (Read 'Output/test232\_128' for details)
 \begin{figure}[!htp]   
 	\centering
 	\includegraphics[width=7cm]{Pictures/F232_1.eps}
@@ -308,7 +307,7 @@ $n=1024$: (Read 'Output/test232\_1024' for details)
 \end{table}\\
 The convergence order in this case is 1.4324.
 \subsubsection{Injection and linear interpolation}
-Take injection and linear interpolation as restriction operator and interpolation operator. To avoid meaningless repetition, we only show the reduction rate of the residuals and the maximum norm of the error vector for different $n$ in the form of a table. More details can be obtained by reading corresponding output files.\\
+Take injection and linear interpolation as restriction operator and interpolation operator, and the rest of the input files remain the same. To avoid meaningless repetition, we only show the reduction rate of the residuals and the maximum norm of the error vector for different $n$ in the form of a table. More details can be obtained by reading corresponding output files.\\
 Use command \textbf{"make test233"} to get results. \\
 \begin{table}[!htp]
 	\centering
@@ -416,7 +415,8 @@ Similar to the case of V-cycle, the input file is as follows:
 \end{table}\\
 The convergence order in this case is 1.93217.
 \subsubsection{Full-weighting and quadratic interpolation}
-Similarly, we show results directly: (Use command \textbf{"make test242"} to get results.)
+Except for restriction operators and interpolation operators, the inputfile is the same as the previous section. Similarly, we show results directly: (Use command \textbf{"make test242"} to get results.)
+\newpage
 \begin{table}[!htp]
 	\centering
 	\begin{tabular}{|c|c|}
@@ -433,8 +433,8 @@ Similarly, we show results directly: (Use command \textbf{"make test242"} to get
 		\hline
 	\end{tabular}
 	\caption{maximum norms of error vectors \\for full multigrid cycle, full-weighting and quadratic interpolation}
-\end{table}\\
-The convergence order in this case is 1.27108.
+\end{table}
+\noindent The convergence order in this case is 1.27108.
 \subsubsection{Injection and linear interpolation}
 Show results directly: (Use command \textbf{"make test243"} to get results.)
 \begin{table}[!htp]
@@ -522,7 +522,7 @@ the result is as follows: (Use command \textbf{"make test3"} to get results.)\\
 Full-weighting and linear interpolation:
 \begin{figure}[!htp]   
 	\centering
-	\includegraphics[width=7cm]{Pictures/F3_1.eps}
+	\includegraphics[width=6cm]{Pictures/F3_1.eps}
 	\caption{norm of residuals \\for V-cycle, full-weighting and linear interpolation\\ $n = 1024$}
 \end{figure}\\
 Then we get relative accuracy 
@@ -530,8 +530,7 @@ $$
 \epsilon = \left \| \textbf{r} \right \| / \left \| \textbf{f} \right \| = 3.94737\times10^{-15} \ ,
 $$ 
 where $\left \| \textbf{r} \right \| $ is the smallest norm of residual that can be achieved in iteration. \\
-\newpage
-\noindent Similarly, we get
+Similarly, we get
 \begin{table}[!htp]
 	\centering
 	\begin{tabular}{|c|c|c|}
@@ -711,7 +710,7 @@ Then we have
 \newpage
 \noindent By simple calculation, we get that the convergence order in this case is 2.00065.
 \subsubsection{Full-weighting and quadratic interpolation}
-To avoid meaningless repetition, we show results only. More details can be obtained by reading corresponding output files.\\
+Except for restriction operators and interpolation operators, the inputfile is the same as the previous section. To avoid meaningless repetition, we show results only. More details can be obtained by reading corresponding output files.\\
 Use command \textbf{"make test422"} to get results. 
 \begin{table}[!htp]
 	\centering
@@ -837,7 +836,8 @@ Similar to the case of V-cycle, the input file is as follows:
 \end{table}\\
 The convergence order in this case is 2.00016.
 \subsubsection{Full-weighting and quadratic interpolation}
-Similarly, we show results directly: (Use command \textbf{"make test432"} to get results.)
+Except for restriction operators and interpolation operators, the inputfile is the same as the previous section. Similarly, we show results directly: (Use command \textbf{"make test432"} to get results.)
+\newpage
 \begin{table}[!htp]
 	\centering
 	\begin{tabular}{|c|c|}
@@ -854,8 +854,9 @@ Similarly, we show results directly: (Use command \textbf{"make test432"} to get
 		\hline
 	\end{tabular}
 	\caption{maximum norms of error vectors \\for full multigrid cycle, full-weighting and quadratic interpolation}
-\end{table}\\
-The convergence order in this case is 2.00001.
+\end{table}
+\balance
+\noindent The convergence order in this case is 2.00001.
 \subsubsection{Injection and linear interpolation}
 Show results directly: (Use command \textbf{"make test433"} to get results.)
 \begin{table}[!htp]
