@@ -1,0 +1,12 @@
+set(Multigrid_Files
+  Multigrid/Laplacian.h
+  Multigrid/Smoother.h
+  Multigrid/WeightedJacobi.h
+  Multigrid/PossionDirectSolver.h
+  Multigrid/Restrictor.h
+  Multigrid/Interpolator.h
+  Multigrid/MultigridSolver.h
+  Multigrid/MGFactory.h
+  Multigrid/TestMultigrid.h
+    PARENT_SCOPE
+)

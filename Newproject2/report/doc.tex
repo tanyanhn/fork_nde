@@ -1,0 +1,912 @@
+\documentclass[a4paper,twoside]{ctexart}
+\usepackage{geometry}
+\geometry{margin=1cm,vmargin={0pt,1cm}}
+\setlength{\topmargin}{-2cm}
+\setlength{\paperheight}{23cm}
+\setlength{\paperwidth}{18cm}
+\setlength{\textheight}{19.6cm}
+\setlength{\textwidth}{15cm}
+\usepackage{makecell}
+\usepackage{fancyhdr}
+\usepackage{siunitx}
+\usepackage{amssymb}
+\usepackage{indentfirst}
+\setlength{\parindent}{0.5em}
+
+\pagenumbering{arabic}
+
+% useful packages.
+\usepackage{multirow}
+\usepackage{caption}
+\usepackage{mathrsfs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{enumerate}
+\usepackage{xcolor,graphicx,float,subfigure}
+\usepackage{epstopdf}
+\usepackage{multicol}
+\usepackage{fancyhdr}
+\usepackage{layout}
+\usepackage{listings}
+\usepackage{diagbox}
+\lstset{language=Matlab}
+\lstset{breaklines}
+\lstset{extendedchars=false}
+\usepackage[colorlinks,linkcolor=blue]{hyperref}
+\usepackage{xcolor}
+\usepackage{cite}
+\usepackage[numbers,sort&compress]{natbib}
+\setcitestyle{open={},close={}}
+%\usepackage{natbibspacing}
+%\renewcommand{\refname}{}
+\usepackage{anyfontsize}
+
+% 中文定理环境
+
+\newtheorem{definition}{定义}[section]
+\newtheorem{example}{例}[section]
+\newtheorem{remark}{注}[section]
+\newtheorem{lemma}[definition]{引理}
+\newtheorem{theorem}[definition]{定理}
+\newtheorem{proposition}[definition]{命题}
+\newtheorem{corollary}[definition]{推论}
+\newenvironment{solution}{\begin{proof}[\indent\bf 解]}{\end{proof}}
+\renewcommand{\proofname}{\bf 证明}
+
+% % English theorem environment
+% \newtheorem{theorem}{Theorem}[section]
+% \newtheorem{lemma}[theorem]{Lemma}
+% \newtheorem{proposition}[theorem]{Proposition}
+% \newtheorem{corollary}[theorem]{Corollary}
+% \newtheorem{definition}{Definition}[section]
+% \newtheorem{remark}{Remark}[section]
+% \newtheorem{example}{Example}[section]
+% \newenvironment{solution}{\begin{proof}[Solution]}{\end{proof}}
+
+% some common command
+\newcommand{\dif}{\mathrm{d}}
+\newcommand{\avg}[1]{\left\langle #1 \right\rangle}
+\newcommand{\pdfrac}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\op}{\odot}
+\newcommand{\Eabs}{E_{\mathrm{abs}}}
+\newcommand{\Erel}{E_{\mathrm{rel}}}
+\newcommand{\Ediv}{\mathrm{div}}%\div是除号
+\newcommand{\lrq}[1]{\left( #1 \right)}
+\newcommand{\avint}[1]{\frac{1}{\left|#1\right|}\int_{#1}}
+
+\newcommand{\upcite}[1]{\textsuperscript{\textsuperscript{\cite{#1}}}} 
+
+\makeatletter
+\newcommand\sixteen{\@setfontsize\sixteen{17pt}{6}}
+\renewcommand{\maketitle}{\bgroup\setlength{\parindent}{0pt}
+\begin{flushleft}
+\sixteen\bfseries \@title
+\medskip
+\end{flushleft}
+\textit{\@author}
+\egroup}
+\renewcommand{\maketag@@@}[1]{\hbox{\m@th\normalsize\normalfont#1}}
+\makeatother
+
+\CTEXsetup[format={\Large\bfseries}]{section}
+
+\title{Project02}
+\author{李之琪 3180103041}
+
+
+\begin{document}
+\maketitle
+
+\section{问题描述}
+\subsection{规则区域$\Omega$上用多重网格法求解Possion方程}
+\label{sec:Re}
+在区域$(0,1)$或区域$(0,1)^2$上求解Possion方程
+\begin{equation}
+  \label{eq:oriequ}
+\left\{\begin{matrix}
+\quad -\Delta \varphi = f, \quad \text{on}\ \Omega\\
+a\varphi+b\frac{\partial \varphi}{\partial n}  = F, \quad \text{on}\ \partial \Omega
+\end{matrix}\right.
+\end{equation}
+以下内容应由用户指定或给出：
+ \begin{enumerate}[(1)]
+ \item 边界条件：Dirichlet条件, Neumann条件或混合边界条件；
+ \item 右端项：上式中的函数$f$与$F$；
+ \item 限制算子：full-weighting算子或injection算子；
+ \item 插值算子：线性插值算子或二次插值算子；
+ \item 多重网格方法：V-cycle 或 full multigrid cycle；
+ \item 迭代停止条件：最大迭代次数与相对残差限；
+ \item 初值条件：零初值；
+ \item 底层求解器：Jacobi迭代。
+ \end{enumerate}
+ 我们在$n=32,64,128,256$的网格上对多重网
+ 格算法进行测试，计算误差与收敛精度，并将其所需的CPU时间与直接使用LU分解的求解
+ 方法进行对比。
+\section{二阶方法理论证明}
+类似于一维的情形，我们的目标是证明$TG$算子具有很小的谱半径。设矩阵
+$A_{2D}$有特征向量$\mathbf{W}_{ij} =
+\text{vec}(\mathbf{w}_i(\mathbf{w}_j)^T)$，$i,j = 1,2,\cdots,n$，这里$\mathbf{w}_i$是一维情
+形时矩阵$A$的特征向量。设$k_1,k_2\in [1,\frac{n}{2}), k_1' = n - k_1 ,
+k_2' = n - k_2$。则首先有
+\begin{lemma}
+  \label{le:1}
+  \begin{eqnarray}
+\mathbf{W}^h_{k'_1 k_2,in+j} = (-1)^{j+1}\mathbf{W}^h_{k_1
+  k_2,in+j},\\
+\mathbf{W}^h_{k_1 k'_2,in+j} = (-1)^{i+1}\mathbf{W}^h_{k_1
+  k_2,in+j},\\
+\mathbf{W}^h_{k'_1 k'_2,in+j} = (-1)^{j+i}\mathbf{W}^h_{k_1
+    k_2,in+j}.
+     \end{eqnarray}
+\end{lemma}
+\begin{proof}
+  \begin{eqnarray}
+    \mathbf{W}^h_{k'_1 k_2,in+j} =
+    \mathbf{w}^h_{k'_1,j}\mathbf{w}^h_{k_2,i} =
+    (-1)^{j+1}\mathbf{w}^h_{k_1,j}\mathbf{w}^h_{k_2,i} = (-1)^{j+1}\mathbf{W}^h_{k_1
+    k_2,in+j}.\\
+    \mathbf{W}^h_{k_1 k'_2,in+j} =
+    \mathbf{w}^h_{k_1,j}\mathbf{w}^h_{k'_2,i}=(-1)^{i+1}\mathbf{w}^h_{k_1,j}\mathbf{w}^h_{k_2,i}
+    = (-1)^{i+1}\mathbf{W}^h_{k_1
+    k_2,in+j}.\\
+    \mathbf{W}^h_{k'_1 k'_2,in+j} = \mathbf{w}^h_{k'_1,j}\mathbf{w}^h_{k'_2,i}=(-1)^{j+i+2}\mathbf{w}^h_{k_1,j}\mathbf{w}^h_{k_2,i}
+    = (-1)^{j+i}\mathbf{W}^h_{k_1
+    k_2,in+j}.
+  \end{eqnarray}
+\end{proof}
+
+接下来考虑限制算子和插值算子的作用，有
+\begin{lemma}
+  \begin{eqnarray}
+    I_h^{2h}\mathbf{W}_{k_1 k_2}^h = \frac{1}{2}(c_{k_1}+c_{k_2})\mathbf{W}_{k_1 k_2}^{2h},\\
+    I_h^{2h}\mathbf{W}_{k'_1 k_2}^h = -\frac{1}{2}(s_{k_1}+c_{k_2})\mathbf{W}_{k_1 k_2}^{2h},\\
+    I_h^{2h}\mathbf{W}_{k_1 k'_2}^h = -\frac{1}{2}(c_{k_1}+s_{k_2})\mathbf{W}_{k_1 k_2}^{2h},\\
+    I_h^{2h}\mathbf{W}_{k'_1 k'_2}^h = \frac{1}{2}(s_{k_1}+s_{k_2})\mathbf{W}_{k_1 k_2}^{2h}.
+  \end{eqnarray}
+  这里$c_k = \cos^2(\frac{k\pi}{2n}), s_k = \sin^2(\frac{k\pi}{2n})$。
+\end{lemma}
+\begin{proof}
+  首先有
+  \begin{eqnarray}
+    \begin{aligned}
+      &\left(I_h^{2h}\mathbf{W}_{k_1 k_2}^h\right)_{in+j} \\
+      &=\frac{1}{8}\mathbf{w}_{k_1,2j-1}^h\mathbf{w}_{k_2,2i}^h+\frac{1}{4}\mathbf{w}_{k_1,2j}^h\mathbf{w}_{k_2,2i}^h+\frac{1}{8}\mathbf{w}_{k_1,2j+1}^h\mathbf{w}_{k_2,2i}^h\\
+      & +\frac{1}{8}\mathbf{w}_{k_1,2j}^h\mathbf{w}_{k_2,2i-1}^h+\frac{1}{4}\mathbf{w}_{k_1,2j}^h\mathbf{w}_{k_2,2i}^h+\frac{1}{8}\mathbf{w}_{k_1,2j}^h\mathbf{w}_{k_2,2i+1}^h\\
+      &= \frac{1}{2}\mathbf{w}_{k_2,2i}^h\cdot
+      c_{k_1}\mathbf{w}_{k_1,2j}^h+\frac{1}{2}\mathbf{w}_{k_1,2j}^h\cdot
+      c_{k_2}\mathbf{w}_{k_2,2i}^h\\
+      &=\frac{1}{2}(c_{k_1}+c_{k_2})\mathbf{w}_{k_1,2j}^h\mathbf{w}_{k_2,2i}^h = \left(\frac{1}{2}(c_{k_1}+c_{k_2})\mathbf{W}_{k_1 k_2}^{2h}\right)_{in+j}.
+    \end{aligned}
+  \end{eqnarray}
+  从而第一个等式得证。代入$k'_1 = n - k_1, k'_2 = n - k_2$，可以得到剩
+  下三个等式。
+\end{proof}
+  \begin{lemma}
+    \begin{eqnarray}
+      I_{2h}^h\mathbf{W}_{k_1 k_2}^{2h} = c_{k_1}c_{k_2}\mathbf{W}_{k_1 k_2}^{h}-s_{k_1}c_{k_2}\mathbf{W}_{k'_1 k_2}^h-c_{k_1}s_{k_2}\mathbf{W}_{k_1 k'_2}^h+s_{k_1}s_{k_2}\mathbf{W}_{k'_1 k'_2}^h.
+    \end{eqnarray}
+
+  \end{lemma}
+  \begin{proof}
+    一方面，lemma\ref{le:1}说明
+    \begin{eqnarray}
+    \begin{aligned}
+      &\left(c_{k_1}c_{k_2}\mathbf{W}_{k_1
+        k_2}^{h}-s_{k_1}c_{k_2}\mathbf{W}_{k'_1
+        k_2}^h-c_{k_1}s_{k_2}\mathbf{W}_{k_1
+        k'_2}^h+s_{k_1}s_{k_2}\mathbf{W}_{k'_1 k'_2}^h\right)_{in+j}\\
+      &=c_{k_1}c_{k_2}\mathbf{W}_{k_1
+        k_2,in+j}^h+(-1)^js_{k_1}c_{k_2}\mathbf{W}_{k_1
+        k_2,in+j}^h+(-1)^ic_{k_1}s_{k_2}\mathbf{W}_{k_1
+        k_2,in+j}^h+(-1)^{i+j}s_{k_1}s_{k_2}\mathbf{W}_{k_1 k_2,in+j}^h\\
+      &=\begin{cases}
+        (c_{k_1}+s_{k_1})(c_{k_2}+s_{k_2})\mathbf{W}_{k_1 k_2,in+j}^h =
+        \mathbf{W}_{k_1 k_2,in+j}^h, \qquad \qquad \qquad \quad \text{if }i,j\text{ are even},\\
+        (c_{k_1}+s_{k_1})(c_{k_2}-s_{k_2})\mathbf{W}_{k_1 k_2,in+j}^h =
+        \cos{\frac{k_2\pi}{n}}\mathbf{W}_{k_1 k_2,in+j}^h, \qquad \qquad \text{if } i
+          \text{ is odd , }j\text{ is even},\\
+        (c_{k_1}-s_{k_1})(c_{k_2}+s_{k_2})\mathbf{W}_{k_1 k_2,in+j}^h =
+        \cos{\frac{k_1\pi}{n}}\mathbf{W}_{k_1 k_2,in+j}^h, \qquad \qquad \text{if } i
+          \text{ is even , }j\text{ is odd},\\
+          (c_{k_1}-s_{k_1})(c_{k_2}-s_{k_2})\mathbf{W}_{k_1 k_2,in+j}^h =
+        \cos{\frac{k_1\pi}{n}}\cos{\frac{k_2\pi}{n}}\mathbf{W}_{k_1 k_2,in+j}^h, \quad \text{if }i,j\text{ are odd}.
+      \end{cases}
+    \end{aligned}
+    \end{eqnarray}
+    另一方面，
+     \begin{eqnarray}
+    \begin{aligned}
+      &\left(I_{2h}^h\mathbf{W}_{k_1 k_2}^{2h}\right)_{in+j}\\
+      &= \begin{cases}
+        \mathbf{W}_{k_1 k_2,in+j}^h, \qquad \qquad \qquad \qquad \qquad\qquad \qquad \qquad \qquad \qquad \qquad\text{if }i,j\text{ are even},\\
+        (\frac{1}{2}\sin{\frac{k_2\pi(i-1)}{n}}+\frac{1}{2}\sin{\frac{k_2\pi(i+1)}{n}})\mathbf{w}_{k_1,j}^h =
+        \cos{\frac{k_2\pi}{n}}\mathbf{W}_{k_1 k_2,in+j}^h,\qquad  \text{if } i
+          \text{ is odd , }j\text{ is even},\\
+        (\frac{1}{2}\sin{\frac{k_1\pi(j-1)}{n}}+\frac{1}{2}\sin{\frac{k_1\pi(j+1)}{n}})\mathbf{w}_{k_2,i}^h =
+        \cos{\frac{k_1\pi}{n}}\mathbf{W}_{k_1 k_2,in+j}^h,\qquad \text{if } i
+          \text{ is even , }j\text{ is odd},\\
+          (\frac{1}{2}\sin{\frac{k_1\pi(j-1)}{n}}+\frac{1}{2}\sin{\frac{k_1\pi(j+1)}{n}})(\frac{1}{2}\sin{\frac{k_2\pi(i-1)}{n}}+\frac{1}{2}\sin{\frac{k_2\pi(i+1)}{n}}) =
+          \cos{\frac{k_1\pi}{n}}\cos{\frac{k_2\pi}{n}}\mathbf{W}_{k_1
+            k_2,in+j}^h, \\ \qquad \qquad \qquad\qquad \quad \qquad\qquad \qquad \qquad \qquad \qquad\qquad \qquad \qquad  \text{if }i,j\text{ are odd}.
+           \end{cases}
+    \end{aligned}
+     \end{eqnarray}
+     从而引理得证。
+   \end{proof}
+   最后，我们讨论$TG$算子的作用。
+   \begin{theorem}
+     \begin{eqnarray}
+        \begin{aligned}
+       &TG\mathbf{W}_{k_1k_2} = \lambda_{k_1k_2}^{\nu_1+\nu_2}[1-\frac{c_{k_1}c_{k_2}(c_{k_1}+c_{k_2})(s_{k_1}+s_{k_2})}{2(s_{k_1}c_{k_1}+s_{k_2}c_{k_2})}]\mathbf{W}_{k_1
+        k_2}^{h}\\
+      &+\frac{(c_{k_1}+c_{k_2})(s_{k_1}+s_{k_2})}{2(s_{k_1}c_{k_1}+s_{k_2}c_{k_2})}\left(\lambda_{k_1k_2}^{\nu_1}\lambda_{k'_1k_2}^{\nu_2}s_{k_1}c_{k_2}\mathbf{W}_{k'_1
+          k_2}^h+\lambda_{k_1k_2}^{\nu_1}\lambda_{k_1k'_2}^{\nu_2}c_{k_1}s_{k_2}\mathbf{W}_{k_1
+          k'_2}^h-\lambda_{k_1k_2}^{\nu_1}\lambda_{k'_1k'_2}^{\nu_2}s_{k_1}s_{k_2}\mathbf{W}_{k'_1 k'_2}^h\right).
+      \end{aligned}
+     \end{eqnarray}
+     这里$\lambda$是对应松弛算子$T_{\omega}$的特征值。
+   \end{theorem}
+   \begin{proof}
+     考虑$\nu_1 = \nu_2 = 0$的情况，有
+     \begin{eqnarray}
+    \begin{aligned}
+      &A_{2D}\mathbf{W}_{k_1k_2}^h =
+      \lambda_{k_1k_2}\mathbf{W}_{k_1k_2}^h =
+      \left(\frac{4s_{k_1}}{h^2}+\frac{4s_{k_2}}{h^2}
+      \right)\mathbf{W}_{k_1k_2}^h\\
+      &\Rightarrow I_h^{2h}A_{2D}\mathbf{W}_{k_1k_2}^h = (c_{k_1}+c_{k_2})\left(\frac{2s_{k_1}}{h^2}+\frac{2s_{k_2}}{h^2}
+      \right)\mathbf{W}_{k_1k_2}^{2h}\\
+      &\Rightarrow (A_{2D})^{-1}I_h^{2h}A_{2D}\mathbf{W}_{k_1k_2}^h = (\frac{4\sin^2{\frac{k_1\pi}{n}}}{(2h)^2}+\frac{4\sin^2{\frac{k_2\pi}{n}}}{(2h)^2})^{-1}(c_{k_1}+c_{k_2})\left(\frac{2s_{k_1}}{h^2}+\frac{2s_{k_2}}{h^2}
+      \right)\mathbf{W}_{k_1k_2}^{2h}\\
+      & =
+      \frac{(c_{k_1}+c_{k_2})(s_{k_1}+s_{k_2})}{2(s_{k_1}c_{k_1}+s_{k_2}c_{k_2})}\mathbf{W}_{k_1k_2}^{2h}\\
+      &\Rightarrow -I_{2h}^h
+      (A_{2D})^{-1}I_h^{2h}A_{2D}\mathbf{W}_{k_1k_2}^h \\
+      &=
+      \frac{(c_{k_1}+c_{k_2})(s_{k_1}+s_{k_2})}{2(s_{k_1}c_{k_1}+s_{k_2}c_{k_2})}\left(-c_{k_1}c_{k_2}\mathbf{W}_{k_1
+          k_2}^{h}+s_{k_1}c_{k_2}\mathbf{W}_{k'_1
+          k_2}^h+c_{k_1}s_{k_2}\mathbf{W}_{k_1
+          k'_2}^h-s_{k_1}s_{k_2}\mathbf{W}_{k'_1 k'_2}^h\right)\\
+      &\Rightarrow [I-I_{2h}^h
+      (A_{2D})^{-1}I_h^{2h}A_{2D}]\mathbf{W}_{k_1k_2}^h = [1-\frac{c_{k_1}c_{k_2}(c_{k_1}+c_{k_2})(s_{k_1}+s_{k_2})}{2(s_{k_1}c_{k_1}+s_{k_2}c_{k_2})}]\mathbf{W}_{k_1
+        k_2}^{h}\\
+      &+\frac{(c_{k_1}+c_{k_2})(s_{k_1}+s_{k_2})}{2(s_{k_1}c_{k_1}+s_{k_2}c_{k_2})}\left(s_{k_1}c_{k_2}\mathbf{W}_{k'_1
+          k_2}^h+c_{k_1}s_{k_2}\mathbf{W}_{k_1
+          k'_2}^h-s_{k_1}s_{k_2}\mathbf{W}_{k'_1 k'_2}^h\right)\\
+    \end{aligned}
+     \end{eqnarray}
+     将$\nu_1,\nu_2$纳入考虑，即可得到待证结论。
+   \end{proof}
+
+   注意到系数
+   $[1-\frac{c_{k_1}c_{k_2}(c_{k_1}+c_{k_2})(s_{k_1}+s_{k_2})}{2(s_{k_1}c_{k_1}+s_{k_2}c_{k_2})}]$
+   以及$s_{k_1}$、$s_{k_2}$都是较小的值，故$TG$算子关于
+   $\mathbf{W}_{k_1k_2}$只有缩小的作用。类似地，我们可以得到$TG$关于
+   $\mathbf{W}_{k'_1k_2}$、$\mathbf{W}_{k_1k、_2}$和
+   $\mathbf{W}_{k'_1k'_2}$的作用。类似的分析说明所有的系数都是小的，从
+   而$TG$算子具有小的谱半径。至此，我们完成了二维情形的证明。
+\newpage
+\section{数值结果}
+\subsection{一维规则区域$\Omega=(0,1)$上的数值结果}
+\subsubsection{$F = \sin(\pi x)$}
+\noindent Domain: $(0,1)$
+BCtype : D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000511158&1.9997&0.000127816&2.00009&3.19521e-05&2.00068&7.98424e-06\\
+\hline
+$\|\mathrm{E}\|_2$&0.00056821&2.00057&0.000141997&2.00031&3.54917e-05&2.00074&8.86837e-06\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.000803571&2.00057&0.000200814&2.00031&5.01928e-05&2.00074&1.25418e-05\\
+\hline
+\end{tabular}
+\caption{V-cycle test，Injection，LinearInterpolation，完整参数表见Input1.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000511159&1.99969&0.000127818&2.00098&3.19328e-05&2.14298&7.22998e-06\\
+\hline
+$\|\mathrm{E}\|_2$&0.000568212&2.00056&0.000141998&2.00252&3.54376e-05&2.1417&8.03061e-06\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.000803572&2.00056&0.000200816&2.00417&5.00592e-05&2.14005&1.13571e-05\\
+\hline
+\end{tabular}
+\caption{V-cycle test，FullWeightingRestriction，LinearInterpolation，完整参数表见Input1.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000511157&1.99966&0.00012782&1.99738&3.20129e-05&2.00361&7.98325e-06\\
+\hline
+$\|\mathrm{E}\|_2$&0.000568209&2.00053&0.000142&1.99913&3.55215e-05&2.00214&8.86723e-06\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.000803569&2.00053&0.000200819&2.00117&5.01641e-05&2.00012&1.254e-05\\
+\hline
+\end{tabular}
+\caption{V-cycle test，Injection，QuadraticInterpolation，完整参数表见Input1.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000511159&1.99969&0.000127817&1.99911&3.19738e-05&2.22707&6.82934e-06\\
+\hline
+$\|\mathrm{E}\|_2$&0.000568211&2.00056&0.000141997&2.00023&3.54938e-05&2.2272&7.58051e-06\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.000803571&2.00056&0.000200815&2.00138&5.01556e-05&2.22834&1.07034e-05\\
+\hline
+\end{tabular}
+\caption{V-cycle test，FullWeightingRestriction，QuadraticInterpolation，完整参数表见Input1.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : N , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000790461&2.03785&0.000192499&1.9961&4.82548e-05&1.94538&1.25292e-05\\
+\hline
+$\|\mathrm{E}\|_2$&0.00112124&2.03091&0.000274368&1.99914&6.8633e-05&1.9622&1.76137e-05\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.00252421&2.00076&0.000630719&1.98893&0.000158894&1.96864&4.05964e-05\\
+\hline
+\end{tabular}
+\caption{full multigrid cycle test，Injection，LinearInterpolation，完整参数表见Input3.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : N , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000790145&2.03694&0.000192543&2.01973&4.74821e-05&2.00206&1.18536e-05\\
+\hline
+$\|\mathrm{E}\|_2$&0.00112092&2.03026&0.000274413&2.01571&6.78602e-05&2.00916&1.68577e-05\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.0025237&2.0003&0.000630792&2.00131&0.000157555&2.00514&3.92486e-05\\
+\hline
+\end{tabular}
+\caption{full multigrid cycle test，FullWeightingRestriction，LinearInterpolation，完整参数表见Input3.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : N , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000790462&2.03692&0.000192622&2.45059&3.52376e-05&1.47798&1.26499e-05\\
+\hline
+$\|\mathrm{E}\|_2$&0.00112124&2.03026&0.000274491&2.35792&5.35456e-05&1.59296&1.77498e-05\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.00252421&2.00033&0.000630909&2.23159&0.000134336&1.71808&4.08318e-05\\
+\hline
+\end{tabular}
+\caption{full multigrid cycle test，Injection，QuadraticInterpolation，完整参数表见Input3.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : N , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000790134&2.03678&0.000192561&2.01925&4.75022e-05&2.0023&1.18566e-05\\
+\hline
+$\|\mathrm{E}\|_2$&0.00112091&2.0302&0.000274422&2.01584&6.78562e-05&2.00764&1.68745e-05\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.00252369&2.0003&0.000630792&2.00078&0.000157613&2.00372&3.93019e-05\\
+\hline
+\end{tabular}
+\caption{full multigrid cycle test，FullWeightingRestriction，QuadraticInterpolation，完整参数表见Input3.json}
+\end{table}\\
+
+\newpage
+\subsubsection{$F = e^x$}
+\noindent Domain: $(0,1)$
+BCtype : D , N
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000174834&2.01992&4.31091e-05&2.00694&1.07256e-05&1.9368&2.80146e-06\\
+\hline
+$\|\mathrm{E}\|_2$&0.000203578&2.01555&5.03491e-05&2.0045&1.25481e-05&1.95503&3.23635e-06\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.000361213&1.99736&9.04686e-05&1.99082&2.27615e-05&1.95316&5.87814e-06\\
+\hline
+\end{tabular}
+\caption{V-cycle test，Injection，LinearInterpolation，完整参数表见Input2.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : D , N
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000174968&2.01617&4.32546e-05&2.00059&1.08092e-05&1.87033&2.95644e-06\\
+\hline
+$\|\mathrm{E}\|_2$&0.000203711&2.01258&5.04856e-05&1.98831&1.27241e-05&1.91391&3.37662e-06\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.000361404&1.99459&9.06904e-05&1.96157&2.32846e-05&1.92602&6.12743e-06\\
+\hline
+\end{tabular}
+\caption{V-cycle test，FullWeightingRestriction，LinearInterpolation，完整参数表见Input2.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : D , N
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000174914&2.01758&4.31988e-05&2.00342&1.07741e-05&1.89345&2.89999e-06\\
+\hline
+$\|\mathrm{E}\|_2$&0.00020365&2.01397&5.0422e-05&1.99318&1.26652e-05&1.93517&3.31185e-06\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.000361308&1.99609&9.05724e-05&1.96776&2.31547e-05&1.95062&5.99022e-06\\
+\hline
+\end{tabular}
+\caption{V-cycle test，Injection，QuadraticInterpolation，完整参数表见Input2.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : D , N
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000174842&2.01966&4.31187e-05&2.05689&1.03628e-05&1.88108&2.81331e-06\\
+\hline
+$\|\mathrm{E}\|_2$&0.000203583&2.01546&5.03534e-05&2.00141&1.2576e-05&1.95625&3.24082e-06\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.000361214&1.99741&9.04661e-05&1.95519&2.33301e-05&1.99022&5.87219e-06\\
+\hline
+\end{tabular}
+\caption{V-cycle test，FullWeightingRestriction，QuadraticInterpolation，完整参数表见Input2.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&1.1449e-05&2.01384&2.83493e-06&2.0628&6.78543e-07&2.68539&1.05486e-07\\
+\hline
+$\|\mathrm{E}\|_2$&1.25644e-05&2.01508&3.10845e-06&2.06206&7.44394e-07&2.63536&1.19807e-07\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&1.72331e-05&2.01542&4.26247e-06&2.0574&1.02406e-06&2.59325&1.69698e-07\\
+\hline
+\end{tabular}
+\caption{full multigrid cycle test，Injection，LinearInterpolation，完整参数表见Input4.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&1.14474e-05&2.00079&2.86028e-06&1.99978&7.15179e-07&2.02943&1.75184e-07\\
+\hline
+$\|\mathrm{E}\|_2$&1.25628e-05&2.00185&3.13667e-06&1.9996&7.84384e-07&2.02522&1.92697e-07\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&1.72313e-05&2.00234&4.30085e-06&1.99686&1.07755e-06&2.03019&2.6381e-07\\
+\hline
+\end{tabular}
+\caption{full multigrid cycle test，FullWeightingRestriction，LinearInterpolation，完整参数表见Input4.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&1.1451e-05&2.01547&2.83221e-06&2.00579&7.05217e-07&2.59654&1.16597e-07\\
+\hline
+$\|\mathrm{E}\|_2$&1.25666e-05&2.01673&3.10543e-06&1.99791&7.77482e-07&2.55161&1.32611e-07\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&1.72361e-05&2.01701&4.25852e-06&1.97177&1.08567e-06&2.52647&1.88432e-07\\
+\hline
+\end{tabular}
+\caption{full multigrid cycle test，Injection，QuadraticInterpolation，完整参数表见Input4.json}
+\end{table}\\
+
+\noindent Domain: $(0,1)$
+BCtype : D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&1.14494e-05&1.99983&2.86269e-06&2.00059&7.15379e-07&2.02679&1.75555e-07\\
+\hline
+$\|\mathrm{E}\|_2$&1.25651e-05&2.0009&3.1393e-06&2.00032&7.84655e-07&2.02275&1.93094e-07\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&1.72347e-05&2.00125&4.30495e-06&1.99734&1.07823e-06&2.02863&2.6426e-07\\
+\hline
+\end{tabular}
+\caption{full multigrid cycle test，FullWeightingRestriction，QuadraticInterpolation，完整参数表见Input4.json}
+\end{table}\\
+
+\subsubsection{$\epsilon$ 减小测试}
+
+\noindent Domain: $(0,1)$
+BCtype : D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000511162&1.99965&0.000127821&1.99991&3.19573e-05&1.99998&7.98942e-06\\
+\hline
+$\|\mathrm{E}\|_2$&0.000568215&2.00052&0.000142002&2.00013&3.54974e-05&2.00004&8.87413e-06\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.000803578&2.00052&0.000200822&2.00013&5.02009e-05&2.00004&1.25499e-05\\
+\hline
+\end{tabular}
+\caption{$F = \sin(\pi x)$，V-cycle test，Injection，
+  LinearInterpolation，$\epsilon$ = 1e-10，完整参数表见Input5.json}
+\end{table}
+
+
+\noindent Domain: $(0,1)$
+BCtype : D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.000511162&1.99965&0.000127821&1.99991&3.19573e-05&1.99998&7.98944e-06\\
+\hline
+$\|\mathrm{E}\|_2$&0.000568215&2.00052&0.000142002&2.00013&3.54974e-05&2.00003&8.87415e-06\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.000803578&2.00052&0.000200822&2.00013&5.02009e-05&2.00003&1.25499e-05\\
+\hline
+\end{tabular}
+\caption{$F = \sin(\pi x)$，V-cycle test，Injection，
+  LinearInterpolation，$\epsilon$ = 1e-12，完整参数表见Input6.json}
+\end{table}
+
+当$\epsilon = 10^{-12}$，进一步减小$\epsilon$，我们发现在$n=256$的网格
+下相对残差已经无法降低到$\epsilon$。造成这一结果的主要原因是双精度的限
+制和舍入误差的累积。网格之间的限制与插值以及迭代求解线性系统都会造
+成舍入误差。
+\newpage
+\subsection{二维规则区域$\Omega=(0,1)^2$上的数值结果}
+\subsubsection{$F=e^{xy}$}
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , D , D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&1.24146e-06&1.99417&3.11622e-07&2.02296&7.66754e-08&1.98069&1.94272e-08\\
+\hline
+$\|\mathrm{E}\|_2$&1.51939e-06&1.99688&3.80669e-07&2.02132&9.37714e-08&1.98296&2.37214e-08\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&3.06682e-06&1.99603&7.68821e-07&2.02223&1.89267e-07&1.98145&4.7929e-08\\
+\hline
+\end{tabular}
+\caption{V-cycle test，Injection，LinearInterpolation，完整参数表见Input7.json}
+\end{table}
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , D , D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&1.24137e-06&1.99294&3.11864e-07&2.03984&7.58424e-08&2.62919&1.22587e-08\\
+\hline
+$\|\mathrm{E}\|_2$&1.5193e-06&1.9965&3.80747e-07&2.03255&9.30634e-08&2.55711&1.5813e-08\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&3.06675e-06&1.99634&7.68634e-07&2.10811&1.78285e-07&2.35327&3.48909e-08\\
+\hline
+\end{tabular}
+\caption{full multigrid cycle test，FullWeightingRestriction，LinearInterpolation，完整参数表见Input8.json}
+\end{table}
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , D , D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&1.24135e-06&1.99255&3.11944e-07&2.39102&5.94712e-08&1.62753&1.92474e-08\\
+\hline
+$\|\mathrm{E}\|_2$&1.51928e-06&1.99607&3.80857e-07&2.31149&7.67247e-08&1.69901&2.3631e-08\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&3.06672e-06&1.99585&7.68887e-07&2.14563&1.73765e-07&1.84559&4.83486e-08\\
+\hline
+\end{tabular}
+\caption{full multigrid cycle test，Injection，QuadraticInterpolation，完整参数表见Input8.json}
+\end{table}
+
+
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , D , D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&1.24145e-06&1.99251&3.11979e-07&2.14585&7.04952e-08&1.87965&1.91571e-08\\
+\hline
+$\|\mathrm{E}\|_2$&1.51938e-06&1.99612&3.80869e-07&2.10664&8.84331e-08&1.91239&2.34924e-08\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&3.06686e-06&1.99606&7.68813e-07&2.04669&1.86082e-07&1.96064&4.78072e-08\\
+\hline
+\end{tabular}
+\caption{V-cycle test，FullWeightingRestriction，QuadraticInterpolation，完整参数表见Input7.json}
+\end{table}
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , N , D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&2.49778e-06&2.05366&6.01649e-07&2.02153&1.48184e-07&2.02165&3.64942e-08\\
+\hline
+$\|\mathrm{E}\|_2$&5.39967e-06&2.05862&1.29617e-06&2.02774&3.1787e-07&2.0208&7.83301e-08\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&3.15282e-05&1.98791&7.94837e-06&1.9954&1.99344e-06&2.00118&4.9795e-07\\
+\hline
+\end{tabular}
+\caption{V-cycle test，Injection，LinearInterpolation，完整参数表见Input9.json}
+\end{table}
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , D , N , N
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&4.3913e-06&2.05301&1.05822e-06&2.02831&2.59413e-07&2.01576&6.41485e-08\\
+\hline
+$\|\mathrm{E}\|_2$&6.6531e-06&2.05271&1.6036e-06&2.02795&3.93208e-07&2.01613&9.72092e-08\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&3.09504e-05&1.98509&7.81795e-06&1.99583&1.96015e-06&2.00096&4.89711e-07\\
+\hline
+\end{tabular}
+\caption{V-cycle test，Injection，LinearInterpolation，完整参数表见Input10.json}
+\end{table}
+\newpage
+\subsubsection{$F = x + y$}
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , D , N , N
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&1.77003e-05&2.05034&4.27332e-06&2.02653&1.04887e-06&2.01367&2.59743e-07\\
+\hline
+$\|\mathrm{E}\|_2$&2.28907e-05&2.04148&5.56047e-06&2.02165&1.36941e-06&2.01113&3.39723e-07\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&5.48998e-05&1.99887&1.37357e-05&1.99972&3.43459e-06&1.99995&8.58676e-07\\
+\hline
+\end{tabular}
+\caption{full multigrid cycle test，Injection，LinearInterpolation，完整参数表见Input12.json}
+\end{table}
+
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , D , N , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&1.30462e-05&2.07293&3.10077e-06&1.89454&8.33982e-07&1.85306&2.3085e-07\\
+\hline
+$\|\mathrm{E}\|_2$&1.92611e-05&2.05686&4.62919e-06&2.00934&1.14983e-06&1.83476&3.22341e-07\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&6.00063e-05&2.01332&1.48637e-05&1.9975&3.72236e-06&1.88149&1.01026e-06\\
+\hline
+\end{tabular}
+\caption{V-cycle test，FullWeightingRestriction，LinearInterpolation，完整参数表见Input11.json}
+\end{table}
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , D , N , N
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&1.77003e-05&2.05034&4.27332e-06&2.02718&1.04839e-06&2.01293&2.59759e-07\\
+\hline
+$\|\mathrm{E}\|_2$&2.28907e-05&2.04148&5.56046e-06&2.02217&1.36891e-06&2.01052&3.39743e-07\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&5.48998e-05&1.99887&1.37357e-05&1.9992&3.43584e-06&2.00038&8.58733e-07\\
+\hline
+\end{tabular}
+\caption{full multigrid cycle test，Injection，QuadraticInterpolation，完整参数表见Input12.json}
+\end{table}
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , D , N , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&1.30923e-05&2.04737&3.16736e-06&1.91352&8.40755e-07&2.12235&1.93098e-07\\
+\hline
+$\|\mathrm{E}\|_2$&1.931e-05&2.03804&4.70185e-06&1.92024&1.24228e-06&2.09857&2.90059e-07\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&6.01045e-05&2.00111&1.50145e-05&1.91732&3.97502e-06&2.0553&9.56387e-07\\
+\hline
+\end{tabular}
+\caption{V-cycle test，FullWeightingRestriction，QuadraticInterpolation，完整参数表见Input11.json}
+\end{table}
+
+\newpage
+\subsubsection{$F = e^{y+\sin{x}}$}
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , D , D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.190883&0.066459&0.182289&0.0339822&0.178046&0.0171857&0.175937\\
+\hline
+$\|\mathrm{E}\|_2$&0.246312&0.0486708&0.238141&0.0248541&0.234074&0.0125611&0.232045\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.565757&-0.000317309&0.565882&-4.59104e-05&0.5659&-2.89721e-05&0.565911\\
+\hline
+\end{tabular}
+\caption{V-cycle test，Injection，LinearInterpolation，完整参数表见Input13.json}
+\end{table}
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , N , D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&32&ratio&64&ratio&128&ratio&256\\
+\hline
+$\|\mathrm{E}\|_1$&0.21532&0.0543032&0.207366&0.0543939&0.199693&0.0012658&0.199518\\
+\hline
+$\|\mathrm{E}\|_2$&0.281574&0.0347235&0.274878&0.0476802&0.265942&-0.00528527&0.266918\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&0.746152&-0.0209423&0.757062&0.0369108&0.737938&-0.0281945&0.752502\\
+\hline
+\end{tabular}
+\caption{full multigrid cycle test，FullWeightingRestriction，QuadraticInterpolation，完整参数表见Input14.json}
+\end{table}
+
+\newpage
+\subsection{CPU时间对比测试}
+我们用二维规则区域来进行CPU时间对比测试。下面是测试结果。
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , D , D , D , 
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccc}
+\hline
+$n$&16&ratio&32&ratio&64\\
+\hline
+$\|\mathrm{E}\|_1$&4.86697e-06&1.97108&1.24138e-06&1.99273&3.11912e-07\\
+\hline
+$\|\mathrm{E}\|_2$&6.01432e-06&1.98499&1.51931e-06&1.99629&3.80803e-07\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&1.20256e-05&1.97132&3.06676e-06&1.99614&7.68746e-07\\
+\hline
+CPU time(s)&0.012488&4.42354&0.267985&5.74421&14.3645\\
+\hline
+\end{tabular}
+\caption{LU分解，$F=e^{xy}$}
+\end{table}
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : D , D , D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&16&ratio&32&ratio&64&ratio&128\\
+\hline
+$\|\mathrm{E}\|_1$&4.86695e-06&1.97115&1.24132e-06&1.99579&3.11235e-07&1.99677&7.79834e-08\\
+\hline
+$\|\mathrm{E}\|_2$&6.01429e-06&1.98505&1.51924e-06&1.99897&3.80081e-07&1.99778&9.51661e-08\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&1.20256e-05&1.97137&3.06665e-06&1.99839&7.67516e-07&1.99791&1.92158e-07\\
+\hline
+CPU time(s)&0.053349&0.979012&0.105157&1.5733&0.312931&2.03841&1.2855\\
+\hline
+\end{tabular}
+\caption{V-cycle test，Injection，LinearInterpolation，$F=e^{xy}$，完整参数表见Input15.json}
+\end{table}
+
+
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : N , D , D , D , 
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccc}
+\hline
+$n$&16&ratio&32&ratio&64\\
+\hline
+$\|\mathrm{E}\|_1$&1.75902e-05&2.03678&4.28685e-06&2.02373&1.05423e-06\\
+\hline
+$\|\mathrm{E}\|_2$&2.2885e-05&2.04482&5.54625e-06&2.02641&1.36141e-06\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&7.50122e-05&1.97524&1.90776e-05&1.9954&4.78464e-06\\
+\hline
+CPU time(s)&0.009031&4.88737&0.267288&5.74904&14.3752\\
+\hline
+\end{tabular}
+\caption{LU分解，$F=e^{xy}$}
+\end{table}
+
+\noindent Domain: $(0,1)\times(0,1)$\\
+BCtype : N , D , D , D
+\begin{table}[htbp]
+\centering\begin{tabular}{c|ccccccc}
+\hline
+$n$&16&ratio&32&ratio&64&ratio&128\\
+\hline
+$\|\mathrm{E}\|_1$&1.75902e-05&2.0368&4.2868e-06&2.02445&1.05369e-06&2.01288&2.61082e-07\\
+\hline
+$\|\mathrm{E}\|_2$&2.2885e-05&2.04483&5.5462e-06&2.02681&1.36103e-06&2.01397&3.36978e-07\\
+\hline
+$\|\mathrm{E}\|_{\infty}$&7.50122e-05&1.97525&1.90776e-05&1.99544&4.78451e-06&1.99878&1.19713e-06\\
+\hline
+CPU time(s)&0.048194&1.1313&0.105572&1.5662&0.312624&2.00859&1.25796\\
+\hline
+\end{tabular}
+\caption{V-cycle test，Injection，LinearInterpolation，$F=e^{xy}$，完整参数表见Input16.json}
+\end{table}
+
+对比可知，多重网格方法相较于直接LU分解在时间效率上有极大的优势。
+
+\end{document}
+
+

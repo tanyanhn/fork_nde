@@ -1,0 +1,16 @@
+set(IrregularGrid_Files
+  IrregularGrid/IrRectDomain.h
+  IrregularGrid/IrFuncFiller.h
+  IrregularGrid/IrGhostFiller.h
+  IrregularGrid/IrPossionOP.h
+  IrregularGrid/IrRestriction.h
+  IrregularGrid/IrInterpolation.h
+  IrregularGrid/IrBottomSolver.h
+  IrregularGrid/IrMultigrid.h
+  IrregularGrid/IrMGFactory.h
+  IrregularGrid/IrTestMultigrid.h
+  IrregularGrid/PossionStencil.h
+  IrregularGrid/PLG.h
+  IrregularGrid/QRHelper.h
+    PARENT_SCOPE
+)

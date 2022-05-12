@@ -1,0 +1,17 @@
+{
+   "Domain" : {
+      "hi" : [ 1 ],
+      "lo" : [ 0 ],
+      "n" : 32
+   },
+    "bctypes" : "DD",
+    "restriction" : "Injection",
+    "interpolation" : "LinearInterpolation",
+    "weight" : 0.666667,
+    "numiter1" : 10,
+    "numiter2" : 10,
+    "numiter3" : 20,
+    "maxiter" : 50,
+    "reltol" : 1e-12
+}
+
