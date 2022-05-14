@@ -88,6 +88,7 @@
 \maketitle
 
 \section{}
+\subsection{$\theta$-method}
 \begin{definition}
   The $\theta$-method solves the heat equation (11.3) by 
   \begin{eqnarray}
@@ -206,6 +207,26 @@
 	\end{eqnarray}
 	Notice that if $\theta \ge \frac{1}{2}$, \eqref{eq:cond1} will never hold.
 \end{proof}
+\begin{theorem}
+	The $\theta$-method is convergent.
+\end{theorem}
+\begin{proof}
+	The proof is similar to the convergence of Crank–Nicolson method By noticing
+	\begin{eqnarray}
+	\label{eq:thetaB}
+	\begin{aligned}
+	B = (I-\theta kA)^{-1}[I+(1-\theta)kA]
+	\end{aligned}
+	\end{eqnarray}
+	and
+	\begin{eqnarray}
+	\begin{aligned}
+	\rho(B) = \max\left|\frac{1+(1-\theta)k\lambda_p}{1-\theta k\lambda_p}\right| \le 1.
+	\end{aligned}
+	\end{eqnarray}
+	Then the proof is completed by Theorem 11.23 and Lemma \ref{le:thetaLTE}.
+\end{proof}
+\subsection{Discrete maximum principle}
 \begin{theorem}[Maximum principle of the heat equation]
 	If $u(x,t)$ is continuous on rectangle $\bar{\Omega} = [0,1]\times[0,T]$, and satisfies the heat equation (11.3) in $\Omega = (0,1) \times (0,T)$, then the maximum and minimum value of $u(x,t)$ over the rectangle is assumed either initially
 	$(t = 0)$, or on the lateral sides $(x = 0, \text{or}\ x = 1)$.
@@ -271,7 +292,7 @@
 	boundary point, and the proof is complete.
 \end{proof}
 \begin{theorem}
-	Asuume the stable condition \eqref{eq:cond0} holds, then the $\theta$-method \eqref{eq:thetamethod} is convergent with consistent initial and
+	Asuume the condition $r \le \frac{1}{4(1 − \theta)} $ holds, then the $\theta$-method \eqref{eq:thetamethod} is convergent with consistent initial and
 	Dirichlet boundary data.
 \end{theorem}
 \begin{proof}
@@ -352,19 +373,18 @@
 	that the solution is zero at each end of the range, and the initial condition gives the values of $U_i^0$ to be zero except at the mid-point; the value at
 	the mid-point is unity. This corresponds to a function with a sharp spike
 	at $x = \frac{1}{2}$.
-	\newpage
 	\begin{figure}[!htp]                                                                       
 		\centering                                                                                                                  
-		\includegraphics[width=9.2cm]{F3.png}                                           
+		\includegraphics[width=7.4cm]{F3.png}                                           
 		\caption*{The Crank–Nicolson method applied to the heat
 			equation where the initial distribution has a sharp spike at the mid-point; $m = 19, h = 0.05$; left: $r = \frac{1}{2}$, right: $r = 1$.}                        
 	\end{figure}
 	
-	\noindent In the case $r = 1$ the discrete maximum principle does not hold, and we see that at the first time level the numerical solution becomes negative
-	at the mid-point. This would normally be regarded as unacceptable. When $r = \frac{1}{2}$ the discrete maximum principle holds, and the numerical values all
-	lie between 0 and 1, as required. However, at the first time level the numerical solution shows two peaks, one each side of the mid-point; the
+	\noindent In the case $r = 1$ , at the first time level the numerical solution becomes negative
+	at the mid-point. This would normally be regarded as unacceptable. When $r = \frac{1}{2}$, the numerical values all lie between 0 and 1 as required. However, at the first time level the numerical solution shows two peaks, one each side of the mid-point. But the
 	exact solution of the problem will have only a single maximum for all $t$.\\
-	These results correspond to a rather extreme case, and the unacceptable behaviour only persists for a few time steps; thereafter the solution
+	%These results correspond to a rather extreme case, and
+	 The unacceptable behaviour only persists for a few time steps; thereafter the solution
 	becomes very smooth in each case. However, they show that in a situation where we require to model some sort of rapid variation in the solution we shall need to use a value of $r$ somewhat smaller than the stability limit.
 \end{example}
 \end{document}
