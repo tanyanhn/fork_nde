@@ -78,6 +78,9 @@
 \egroup}
 \renewcommand{\maketag@@@}[1]{\hbox{\m@th\normalsize\normalfont#1}}
 \makeatother
+\setlength{\abovecaptionskip}{0.cm}
+\setlength{\floatsep}{0.cm}
+\setlength{\intextsep}{0.cm}
 
 %\CTEXsetup[format={\Large\bfseries}]{section}
 
@@ -363,29 +366,175 @@
 	the initial and boundary values are consistent; that is, the errors in the
 	initial and boundary values also tend to zero as $k,h$ tend to zero.
 \end{proof}
+\begin{theorem}
+	The method with a B-stable ODE solver satisfies 
+	\begin{eqnarray}
+	\begin{aligned}
+	U_{min}^* \le U_j^n \le U_{max}^*,
+	\end{aligned}
+	\end{eqnarray}
+		where
+	\begin{eqnarray}
+	\begin{aligned}
+	U_{max}^* := \max{\{|U_0^s|,\ 0 \le s \le n;\ |U_j^0|,\ 0 \le j \le m+1; \ |U_{m+1}^s|,\ 0 \le s \le n\}},
+	\end{aligned}
+	\end{eqnarray}
+		\begin{eqnarray}
+	\begin{aligned}
+	U_{min}^* := \min{\{|U_0^s|,\ 0 \le s \le n;\ |U_j^0|,\ 0 \le j \le m+1; \ |U_{m+1}^s|,\ 0 \le s \le n\}}.
+	\end{aligned}
+	\end{eqnarray}
+\end{theorem}
+\begin{proof}
+	Take $V^n \equiv 0$ in Definition 10.274 and we have
+	\begin{eqnarray}
+	\begin{aligned}
+	|U^{n+1}| \le |U^n|.
+	\end{aligned}
+	\end{eqnarray}
+	Thus by simple induction
+	\begin{eqnarray}
+	\begin{aligned}
+	|U^n_j| \le |U^n_0| \le U_{max}^*.
+	\end{aligned}
+	\end{eqnarray}
+	The minimum part is the same.
+\end{proof}
 \begin{example}
 	The condition for discrete maximum principle, $r(1 − \theta) \le \frac{1}{4}$ , is very much more
 	restrictive than that needed in stability, $r(1 −
 	2\theta) \le \frac{1}{4}$. For example, the Crank–Nicolson method always satisfies the
-	stability condition, but only if $r ≤\le \frac{1}{2}$ does it satisfy the condition given for a discrete maximum principle.\\
+	stability condition, but only if $r ≤\le \frac{1}{2}$ does it satisfy the condition given for a discrete maximum principle.
+\end{example}
+\begin{example}
 	Consider the model problem
 	solved by the Crank–Nicolson method. The boundary conditions specify
 	that the solution is zero at each end of the range, and the initial condition gives the values of $U_i^0$ to be zero except at the mid-point; the value at
 	the mid-point is unity. This corresponds to a function with a sharp spike
-	at $x = \frac{1}{2}$.
-	\begin{figure}[!htp]                                                                       
-		\centering                                                                                                                  
-		\includegraphics[width=7.4cm]{F3.png}                                           
-		\caption*{The Crank–Nicolson method applied to the heat
-			equation where the initial distribution has a sharp spike at the mid-point; $m = 19, h = 0.05$; left: $r = \frac{1}{2}$, right: $r = 1$.}                        
+	at $x = \frac{1}{2}$.\\
+	For each of the following methods, the four figures represent $t = 0$, after 1 time step, after 2 time step and after 10 time step respectively.
+		\begin{figure}[H]
+		\centering  %图片全局居中
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/origin.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/CN0.5_1.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/CN0.5_2.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/CN0.5_10.eps}
+		}
+		\caption*{The Crank–Nicolson method, $r = 0.5$\\(Trapezoidal, A-stable but not L-stable, not B-stable)}
 	\end{figure}
 	
-	\noindent In the case $r = 1$ , at the first time level the numerical solution becomes negative
-	at the mid-point. This would normally be regarded as unacceptable. When $r = \frac{1}{2}$, the numerical values all lie between 0 and 1 as required. However, at the first time level the numerical solution shows two peaks, one each side of the mid-point. But the
-	exact solution of the problem will have only a single maximum for all $t$.\\
-	%These results correspond to a rather extreme case, and
-	 The unacceptable behaviour only persists for a few time steps; thereafter the solution
-	becomes very smooth in each case. However, they show that in a situation where we require to model some sort of rapid variation in the solution we shall need to use a value of $r$ somewhat smaller than the stability limit.
+	\begin{figure}[H]
+		\centering  
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/origin.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/CN1_1.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/CN1_2.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/CN1_10.eps}
+		}
+		\caption*{The Crank–Nicolson method, $r = 1$\\(Trapezoidal, A-stable but not L-stable, not B-stable)}
+	\end{figure}
+	\begin{figure}[H]
+		\centering  %图片全局居中
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/origin.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/FI_1.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/FI_2.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/FI_10.eps}
+		}
+		\caption*{$\theta$-method with $\theta$ = 1, $r = 0.5$\\ (Backward Euler, L-stable and B-stable)}
+	\end{figure}
+	\begin{figure}[H]
+		\centering  
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/origin.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/TSC_1.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/TSC_2.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/TSC_10.eps}
+		}
+		\caption*{The method with ODE solver in Example 10.258, $r = 0.5$\\(L-stable)}
+	\end{figure}
+	We compute the exact solution for comparison. Consider the initial boundary value problem
+	\begin{eqnarray}
+	\begin{aligned}
+	\left\{\begin{matrix}
+	u_t= u_{xx}\quad (t>0, 0< x < 1),\\
+	t = 0 : \quad u = \varphi (x),\qquad  \qquad \\
+	\ x = 0 : u = 0,\quad x = 1 : u = 0,
+	\end{matrix}\right.
+	\end{aligned}
+	\end{eqnarray}
+	here
+	\begin{eqnarray}
+	\begin{aligned}
+	\varphi(x)=\begin{cases}
+	20(x-\frac{9}{20}), \quad \frac{9}{20} \le x < \frac{1}{2},  \\
+	-20(x-\frac{11}{20}), \quad \frac{1}{2} \le x < \frac{11}{20},\\
+	0,\quad \text{otherwise}.
+	\end{cases}
+	\end{aligned}
+	\end{eqnarray}
+	Through the method of separation of variables, we get the series solution
+	\begin{eqnarray}
+	\begin{aligned}
+	u(t,x) = \sum_{k=1}^{\infty}A_ke^{-k^2\pi^2t}\sin(k\pi x)
+	\end{aligned}
+	\end{eqnarray}
+	with
+	\begin{eqnarray}
+	\begin{aligned}
+	A_k &= 2\int_{0}^{1}\varphi(\xi)\sin(k\pi \xi)\text{d}\xi\\
+	&=\frac{40}{k^2\pi^2}\left[-\sin\left(\frac{9}{20}k\pi\right)+2\sin\left(\frac{1}{2}k\pi\right)-\sin\left(\frac{11}{20}k\pi\right)\right].
+	\end{aligned}
+	\end{eqnarray}
+	The following four figures represent the exact solution at $t = 0$, $t = k$, $t = 2k$ and $t = 10k$ respectively.
+		\begin{figure}[H]
+		\centering  %图片全局居中
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/exact0.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/exact1.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/exact2.eps}
+		}
+		\subfigure{
+			\includegraphics[width=0.21\linewidth]{Picture/exact10.eps}
+		}
+		\caption*{Exact solution, time step $k = h^2$($r = 0.5$)}
+	\end{figure}
+%	\noindent In the case $r = 1$ , at the first time level the numerical solution becomes negative
+%	at the mid-point. This would normally be regarded as unacceptable. When $r = \frac{1}{2}$, the numerical values all lie between 0 and 1 as required. However, at the first time level the numerical solution shows two peaks, one each side of the mid-point. But the
+%	exact solution of the problem will have only a single maximum for all $t$.\\
+%	 The unacceptable behaviour only persists for a few time steps; thereafter the solution
+%	becomes very smooth in each case. However, they show that in a situation where we require to model some sort of rapid variation in the solution we shall need to use a value of $r$ somewhat smaller than the stability limit.
 \end{example}
+	
+	
 \end{document}
 
