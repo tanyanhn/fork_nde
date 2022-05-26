@@ -40,20 +40,20 @@ public:
   
   void apply(const Tensor<Real,2>& data,
              Tensor<Real,2>& res) const{
-    Box<2> bx = res.box();
-    const Vec<int,2>& lo = bx.lo();
-    const Vec<int,2>& hi = bx.hi();
-    loop_box_2(bx,i,j){
-      if (i != lo[1] && i != hi[1] && j != lo[0] && j != hi[0]){
-        if (i%2 == 0 && j%2 == 0)
-          res(i,j) = data(i/2,j/2);
-        else if (i%2 == 0 && j%2 != 0)
-          res(i,j) = (data(i/2,j/2)+data(i/2,j/2+1))/2.0;
-        else if (i%2 != 0 && j%2 == 0)
-          res(i,j) = (data(i/2,j/2)+data(i/2+1,j/2))/2.0;
-        else
-          res(i,j) = (data(i/2,j/2)+data(i/2+1,j/2)+data(i/2,j/2+1)+data(i/2+1,j/2+1))/4.0;
-      }
+    const auto& bx = fineDomain;
+    const Vec<int, 2>& lo = bx.lo();
+    const Vec<int, 2>& hi = bx.hi();
+    loop_box_2(bx, i, j) {
+      if (i % 2 == 0 && j % 2 == 0)
+        res(i, j) = data(i / 2, j / 2);
+      else if (i % 2 == 0 && j % 2 != 0)
+        res(i, j) = (data(i / 2, j / 2) + data(i / 2, j / 2 + 1)) / 2.0;
+      else if (i % 2 != 0 && j % 2 == 0)
+        res(i, j) = (data(i / 2, j / 2) + data(i / 2 + 1, j / 2)) / 2.0;
+      else
+        res(i, j) = (data(i / 2, j / 2) + data(i / 2 + 1, j / 2) +
+                     data(i / 2, j / 2 + 1) + data(i / 2 + 1, j / 2 + 1)) /
+                    4.0;
     }
   }
 };
@@ -68,16 +68,14 @@ public:
   
   void apply(const Tensor<Real,1>& data,
              Tensor<Real,1>& res) const{
-    Box<1> bx = res.box();
+    const auto& bx = fineDomain;
     const Vec<int,1>& lo = bx.lo();
-    const Vec<int,1>& hi = bx.hi();
-    loop_box_1(bx,i){
-      if (i != lo[0] && i != hi[0]){
-        if (i%2 == 0)
-          res(i) = data(i/2);
-        else 
-          res(i) = (data(i/2)+data(i/2+1))/2.0;
-        }
+    const Vec<int, 1>& hi = bx.hi();
+    loop_box_1(bx, i) {
+      if (i % 2 == 0)
+        res(i) = data(i / 2);
+      else
+        res(i) = (data(i / 2) + data(i / 2 + 1)) / 2.0;
     }
   }
 };
@@ -94,42 +92,50 @@ public:
   
   void apply(const Tensor<Real,2>& data,
              Tensor<Real,2>& res) const{
-    Box<2> bx = res.box();
+    const auto& bx = fineDomain;
     const Vec<int,2>& sz = bx.size();
     const Vec<int,2>& lo = bx.lo();
-    const Vec<int,2>& hi = bx.hi();
-    loop_box_2(bx,i,j){
-      if (i != lo[1] && i != hi[1] && j != lo[0] && j != hi[0]){
-        if (i%2 == 0 && j%2 == 0)
-          res(i,j) = data(i/2,j/2);
-        else if (i%2 == 0 && j%2 != 0){
-          if (j/2+2 < sz[1]-4)
-            res(i,j) =
-              (3*data(i/2,j/2)+6*data(i/2,j/2+1)-data(i/2,j/2+2))/8.0;
-          else
-            res(i,j) =
-              (3*data(i/2,j/2+1)+6*data(i/2,j/2)-data(i/2,j/2-1))/8.0;
-        } 
-        else if (i%2 != 0 && j%2 == 0){
-          if (i/2+2 < sz[0]-4)
-            res(i,j) =
-              (3*data(i/2,j/2)+6*data(i/2+1,j/2)-data(i/2+2,j/2))/8.0;
-          else
-            res(i,j) =
-              (3*data(i/2+1,j/2)+6*data(i/2,j/2)-data(i/2-1,j/2))/8.0;
-        }
-        else{
-          Real tmp1,tmp2;
-          if (j/2+2 < sz[1]-4)
-            tmp1 = (3*data(i/2,j/2)+6*data(i/2,j/2+1)-data(i/2,j/2+2))/8.0;
-          else
-            tmp1 = (3*data(i/2,j/2+1)+6*data(i/2,j/2)-data(i/2,j/2-1))/8.0;
-          if (i/2+2 < sz[0]-4)
-            tmp2 = (3*data(i/2,j/2)+6*data(i/2+1,j/2)-data(i/2+2,j/2))/8.0;
-          else
-            tmp2 = (3*data(i/2+1,j/2)+6*data(i/2,j/2)-data(i/2-1,j/2))/8.0;
-          res(i,j) = (tmp1+tmp2)/2.0;
-        }
+    const Vec<int, 2>& hi = bx.hi();
+    loop_box_2(bx, i, j) {
+      if (i % 2 == 0 && j % 2 == 0)
+        res(i, j) = data(i / 2, j / 2);
+      else if (i % 2 == 0 && j % 2 != 0) {
+        if (j / 2 + 2 < sz[1] - 4)
+          res(i, j) = (3 * data(i / 2, j / 2) + 6 * data(i / 2, j / 2 + 1) -
+                       data(i / 2, j / 2 + 2)) /
+                      8.0;
+        else
+          res(i, j) = (3 * data(i / 2, j / 2 + 1) + 6 * data(i / 2, j / 2) -
+                       data(i / 2, j / 2 - 1)) /
+                      8.0;
+      } else if (i % 2 != 0 && j % 2 == 0) {
+        if (i / 2 + 2 < sz[0] - 4)
+          res(i, j) = (3 * data(i / 2, j / 2) + 6 * data(i / 2 + 1, j / 2) -
+                       data(i / 2 + 2, j / 2)) /
+                      8.0;
+        else
+          res(i, j) = (3 * data(i / 2 + 1, j / 2) + 6 * data(i / 2, j / 2) -
+                       data(i / 2 - 1, j / 2)) /
+                      8.0;
+      } else {
+        Real tmp1, tmp2;
+        if (j / 2 + 2 < sz[1] - 4)
+          tmp1 = (3 * data(i / 2, j / 2) + 6 * data(i / 2, j / 2 + 1) -
+                  data(i / 2, j / 2 + 2)) /
+                 8.0;
+        else
+          tmp1 = (3 * data(i / 2, j / 2 + 1) + 6 * data(i / 2, j / 2) -
+                  data(i / 2, j / 2 - 1)) /
+                 8.0;
+        if (i / 2 + 2 < sz[0] - 4)
+          tmp2 = (3 * data(i / 2, j / 2) + 6 * data(i / 2 + 1, j / 2) -
+                  data(i / 2 + 2, j / 2)) /
+                 8.0;
+        else
+          tmp2 = (3 * data(i / 2 + 1, j / 2) + 6 * data(i / 2, j / 2) -
+                  data(i / 2 - 1, j / 2)) /
+                 8.0;
+        res(i, j) = (tmp1 + tmp2) / 2.0;
       }
     }
   }
@@ -145,22 +151,20 @@ public:
   
   void apply(const Tensor<Real,1>& data,
              Tensor<Real,1>& res) const{
-    Box<1> bx = res.box();
+    const auto& bx = fineDomain;
     const Vec<int,1>& sz = bx.size();
     const Vec<int,1>& lo = bx.lo();
-    const Vec<int,1>& hi = bx.hi();
-    loop_box_1(bx,i){
-      if (i != lo[0] && i != hi[0]){
-        if (i%2 == 0)
-          res(i) = data(i/2);
-        else{
-          if (i/2+2 < sz[0]-4)
-            res(i) =
-              (3*data(i/2)+6*data(i/2+1)-data(i/2+2))/8.0;
-          else
-            res(i) =
-              (3*data(i/2+1)+6*data(i/2)-data(i/2-1))/8.0;
-        }
+    const Vec<int, 1>& hi = bx.hi();
+    loop_box_1(bx, i) {
+      if (i % 2 == 0)
+        res(i) = data(i / 2);
+      else {
+        if (i / 2 + 2 < sz[0] - 4)
+          res(i) =
+              (3 * data(i / 2) + 6 * data(i / 2 + 1) - data(i / 2 + 2)) / 8.0;
+        else
+          res(i) =
+              (3 * data(i / 2 + 1) + 6 * data(i / 2) - data(i / 2 - 1)) / 8.0;
       }
     }
   }

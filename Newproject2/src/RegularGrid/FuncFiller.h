@@ -31,11 +31,10 @@ template <>
 void FuncFiller<2>::fill(Tensor<Real,2>& res, const ScalarFunction<2>*
                          pfunc) const{
   const Box<2>& bx = domain;
-  const Vec<int,2>& lo = bx.lo();
   const Vec<Real,2>& dx = domain.spacing();
   loop_box_2(bx,i,j){
     iVec Node{i,j};
-    rVec rNode = (Node-lo)*dx;
+    rVec rNode = (Node)*dx;
     res(i,j) = (*pfunc)(rNode);
   }
 }
@@ -48,7 +47,7 @@ void FuncFiller<1>::fill(Tensor<Real,1>& res, const ScalarFunction<1>*
   const Vec<Real,1>& dx = domain.spacing();
   loop_box_1(bx,i){
     Vec<int,1> Node{i};
-    Vec<Real,1> rNode = (Node-lo)*dx;
+    Vec<Real,1> rNode = (Node)*dx;
     res(i) = (*pfunc)(rNode);
   }
 }

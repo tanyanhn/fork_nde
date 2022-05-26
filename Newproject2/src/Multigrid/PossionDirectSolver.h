@@ -37,14 +37,16 @@ void PossionDirectSolver<Dim>::solve(Tensor<Real,Dim>& phi, const Tensor<Real,Di
                                      rhs, const char* const BCTypes, const int maxIter) const{
   Laplacian<Dim> LOP(domain);
   GhostFiller<Dim> GF(domain);
-  Tensor<Real,Dim> tmpres(domain.getGhostedBox());
+  GF.transformInitMpi();
+  Tensor<Real, Dim> tmpres(domain.getGhostedBox());
   for (int i = 0 ; i < maxIter ; i+=2){
-    GF.fillAllSides(phi,BCTypes);
+    GF.fillAllSidesMpi(phi,BCTypes);
     LOP.smooth(phi,rhs,tmpres);
-    GF.fillAllSides(tmpres,BCTypes);
+    GF.fillAllSidesMpi(tmpres,BCTypes);
     LOP.smooth(tmpres,rhs,phi);
   }
-  GF.fillAllSides(phi,BCTypes);
+  GF.fillAllSidesMpi(phi,BCTypes);
+  GF.transformFreeMpi();
 }
 
 // template <int Dim>

@@ -7,8 +7,8 @@
     "bctypes" : "DDDD",
     "restriction" : "Injection",
     "interpolation" : "LinearInterpolation",
-    "numiter1" : 10,
-    "numiter2" : 10,
+    "numiter1" : 1,
+    "numiter2" : 1,
     "numiter3" : 20,
     "maxiter" : 30,
     "reltol" : 1e-12

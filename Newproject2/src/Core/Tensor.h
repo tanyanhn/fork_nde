@@ -143,9 +143,12 @@ protected:
   const T& at(int i, int j, int k, int l) const { return aData[i + j*stride[1] + k*stride[2] + l*stride[3]]; }
   T&       at(int i, int j, int k, int l)       { return aData[i + j*stride[1] + k*stride[2] + l*stride[3]]; }
 
+public:
   static iVec strideFromSize(const iVec &sz);
+  static iVec index2coord(int i, const iVec& stride);
+  static int coord2index(const iVec& c, const iVec& stride);
 
-protected:
+ protected:
   T * __restrict__ aData; // point to bx.lo()
 //  T         *zData; // point to (0,...,0)
   bool      owned;
@@ -163,6 +166,26 @@ Vec<int,Dim> Tensor<T,Dim>::strideFromSize(const Vec<int,Dim> &sz) {
   for(int d=1; d<Dim; d++)
     stride[d] = stride[d-1] * sz[d-1];
   return stride;
+}
+
+template <class T, int Dim>
+inline
+Vec<int,Dim> Tensor<T,Dim>::index2coord(int i, const Vec<int,Dim> &stride) {
+  Vec<int,Dim> coord;
+  for(int d=Dim-1; d>=0; d--){
+    coord[d] = i / stride[d];
+    i %= stride[d];
+  }
+  return coord;
+}
+
+template <class T, int Dim>
+inline
+int Tensor<T,Dim>::coord2index(const Vec<int, Dim> &c, const Vec<int,Dim> &stride) {
+  int i = 0;
+  for (int d = Dim - 1; d >= 0; d--)
+    i += stride[d] * c[d];
+  return i;
 }
 
 template <class T, int Dim>

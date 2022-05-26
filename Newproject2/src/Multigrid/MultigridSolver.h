@@ -5,8 +5,8 @@
 #include "Multigrid/PossionDirectSolver.h"
 #include "Multigrid/Restrictor.h"
 #include "Multigrid/Interpolator.h"
-#include "Multigrid/MGFactory.h"
 #include "RegularGrid/FuncFiller.h"
+#include <mpi/mpi.h>
 #include <vector>
 #include <memory>
 #include <cstring>
@@ -57,9 +57,13 @@ public:
   
   Real solve(Tensor<Real,Dim>& phi, const Tensor<Real,Dim>& rhs,
              const std::array<ScalarFunction<Dim>*,3> pfuncs,
-             bool useFMVCycle = 0) const;
-protected:
-  
+             bool useFMVCycle = false, bool useMpi = false) const;
+
+  void fillerInitMpi();
+
+  void fillerFreeMpi();
+
+ protected:
   void VCycle(int depth, Tensor<Real,Dim>& phi, const Tensor<Real,Dim>&
               rhs) const;
 
@@ -79,6 +83,20 @@ protected:
   // Other parameter
   MGParam Param;
 };
+
+
+template <int Dim>
+void MultigridSolver<Dim>::fillerInitMpi(){
+  for(auto& filler : vGhostFiller) {
+    filler.transformInitMpi();
+  }
+}
+template <int Dim>
+void MultigridSolver<Dim>::fillerFreeMpi(){
+  for(auto& filler : vGhostFiller) {
+    filler.transformFreeMpi();
+  }
+}
 
 template <int Dim>
 MultigridSolver<Dim>::MultigridSolver(const Vector<RectDomain<Dim> >& avDomain, const VPR&
@@ -146,28 +164,31 @@ void MultigridSolver<Dim>::VCycle(int depth, Tensor<Real,Dim>& phi,
   }
   Tensor<Real,Dim> tmp(vDomain[depth].getGhostedBox());
   for (int i = 0 ; i < Param.numPreIter ; i+=2){
-    vGhostFiller[depth].fillAllSides(phi,BCTypes);
+    vGhostFiller[depth].fillAllSidesMpi(phi,BCTypes);
     vLaplacian[depth].smooth(phi,rhs,tmp);
-    vGhostFiller[depth].fillAllSides(tmp,BCTypes);
+    vGhostFiller[depth].fillAllSidesMpi(tmp,BCTypes);
     vLaplacian[depth].smooth(tmp,rhs,phi);
   }
-  vGhostFiller[depth].fillAllSides(phi,BCTypes);
+  vGhostFiller[depth].fillAllSidesMpi(phi, BCTypes);
   Tensor<Real,Dim> rsd(vDomain[depth].getGhostedBox());
   vLaplacian[depth].computeResidul(phi,rhs,rsd);
-  vGhostFiller[depth].fillAllSides(rsd,BCTypes);
+  vGhostFiller[depth].fillAllSidesMpi(rsd,BCTypes);
   Tensor<Real,Dim> crsd(vDomain[depth+1].getGhostedBox());
   vpRestrictor[depth]->apply(rsd,crsd);
   Tensor<Real,Dim> cphi(vDomain[depth+1].getGhostedBox());
   cphi = 0.0;
   VCycle(depth+1,cphi,crsd);
-  vpInterpolator[depth]->apply(cphi,phi);
-  for (int i = 0 ; i < Param.numPostIter ; i+=2){
-    vGhostFiller[depth].fillAllSides(phi,BCTypes);
+  auto correct = phi;
+  vpInterpolator[depth]->apply(cphi, correct);
+  phi = phi + correct;
+  phi = phi * 0.5;
+  for (int i = 0; i < Param.numPostIter; i += 2) {
+    vGhostFiller[depth].fillAllSidesMpi(phi,BCTypes);
     vLaplacian[depth].smooth(phi,rhs,tmp);
-    vGhostFiller[depth].fillAllSides(tmp,BCTypes);
+    vGhostFiller[depth].fillAllSidesMpi(tmp,BCTypes);
     vLaplacian[depth].smooth(tmp,rhs,phi);
   }
-  vGhostFiller[depth].fillAllSides(phi,BCTypes);
+  vGhostFiller[depth].fillAllSidesMpi(phi,BCTypes);
 }
 
 template <int Dim>
@@ -189,34 +210,54 @@ template <int Dim>
 Real MultigridSolver<Dim>::solve(Tensor<Real,Dim>& phi, const Tensor<Real,Dim>& rhs,
                                  const
                                  std::array<ScalarFunction<Dim>*,3>
-                                 pfuncs, bool useFMVCycle) const{
+                                 pfuncs, bool useFMVCycle, bool useMpi) const{
   const RectDomain<Dim>& Domain = vDomain[0];
   Tensor<Real,Dim> rsd(Domain.getGhostedBox());
-  vGhostFiller[0].fillAllSides(phi,BCTypes,pfuncs);
+  rsd = 0;
+  vGhostFiller[0].fillAllSidesMpi(phi, BCTypes, pfuncs);  
   vLaplacian[0].computeResidul(phi,rhs,rsd);
-  vGhostFiller[0].fillAllSides(rsd,BCTypes);
+  vGhostFiller[0].fillAllSidesMpi(rsd,BCTypes);
   Real iRsd = vLaplacian[0].computeNorm(rsd);
+  if (useMpi) {
+    Real tmp = 0;
+    MPI_Allreduce(&iRsd, &tmp, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    iRsd = tmp;
+  }
   Real Rsd[2];
   Rsd[0] = Rsd[1] = iRsd;
   int count = 1;
   Real relRsd,RsdRatio;
-  Tensor<Real,Dim> res(Domain.getGhostedBox());
-  while(1){
+  Tensor<Real, Dim> res(Domain.getGhostedBox());
+  while (1) {
     Rsd[0] = Rsd[1];
     res = 0.0;
     if (useFMVCycle == 0)
-      VCycle(0,res,rsd);
+      VCycle(0, res, rsd);
     else
-      FMVCycle(0,res,rsd);
+      FMVCycle(0, res, rsd);
     phi = phi + res;
-    vGhostFiller[0].fillAllSides(phi,BCTypes,pfuncs);
-    vLaplacian[0].computeResidul(phi,rhs,rsd);
-    vGhostFiller[0].fillAllSides(rsd,BCTypes);
+    vGhostFiller[0].fillAllSidesMpi(phi, BCTypes, pfuncs);
+    vLaplacian[0].computeResidul(phi, rhs, rsd);
+    vGhostFiller[0].fillAllSidesMpi(rsd, BCTypes);
     Rsd[1] = vLaplacian[0].computeNorm(rsd);
-    relRsd = Rsd[1]/iRsd;
-    RsdRatio = Rsd[1]/Rsd[0];
-    std::cout << "Iter " << count << " , relrsd = " << relRsd <<\
-      " , rsdratio = " << RsdRatio << std::endl;
+
+    if (useMpi) {
+      Real tmp = 0;
+      MPI_Allreduce(&Rsd[1], &tmp, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      Rsd[1] = tmp;
+      relRsd = Rsd[1] / iRsd;
+      RsdRatio = Rsd[1] / Rsd[0];
+      int rank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      if (rank == 0)
+        std::cout << "Iter " << count << " , relrsd = " << relRsd
+                  << " , rsdratio = " << RsdRatio << std::endl;
+    } else {
+      relRsd = Rsd[1] / iRsd;
+      RsdRatio = Rsd[1] / Rsd[0];
+      std::cout << "WIter " << count << " , relrsd = " << relRsd
+                << " , rsdratio = " << RsdRatio << std::endl;
+    }
     if (relRsd < Param.reltol || count > Param.maxIter)
       break;
     count++;

@@ -7,6 +7,9 @@ target_link_libraries(Test1DMG bays)
 add_executable(Test2DMG Test2DMG.cpp)
 target_link_libraries(Test2DMG bays)
 
+add_executable(TestMpiFill TestMpiFill.cpp)
+target_link_libraries(TestMpiFill bays)
+
 #add_executable(TestIR TestIR.cpp)
 #target_link_libraries(TestIR bays)
 
