@@ -196,8 +196,9 @@ Real TestMultigrid<Dim>::computeError(const Tensor<Real, Dim>& res,
       break;
   }
   Tensor<Real, Dim> Rres = res.slice(Domain);
-  Laplacian<Dim> POP(Domain);
-  return POP.computeNorm(Rres - exactres, p);
+  auto Rexact = exactres.slice(Domain);
+  Laplacian<Dim> POP(RectDomain<Dim>(Rexact.box(), dx, NodeCentered, 1));
+  return POP.computeNorm(Rres - Rexact, p);
 }
 
 template <int Dim>
